@@ -14,14 +14,6 @@ cd Advisor_Satisfaction_Dashboard
 ```
 
 ### 3) Install dependencies
-If you use conda, activate your env first (optional):
-
-```bash
-conda activate cursor
-```
-
-Then install:
-
 ```bash
 npm install
 ```
