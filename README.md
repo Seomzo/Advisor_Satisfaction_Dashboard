@@ -1,69 +1,42 @@
 # Advisor Satisfaction Dashboard
 
-Full-screen dashboard for the daily Tekion **Service Employee Rank** export (`.xlsx`).
+Full-screen dashboard for the daily Tekion **Service Employee Rank** Excel export (`.xlsx`).
 
-## What it does
-- **Upload** a Tekion-exported XLSX daily
-- Server parses it into a stable JSON API (`/api/data`)
-- React frontend renders a **big-screen “TV mode”** dashboard with:
-  - podium + ranked advisor list
-  - horizontally-scrollable KPI table (all columns)
-  - auto-refresh every 30 seconds
+## Setup on a new PC (recommended “TV mode”)
+### 1) Install prerequisites
+- **Node.js 18+**
+- **Python 3** (the backend uses `python3` to parse the `.xlsx`)
 
-## Tech stack
-- **Backend**: Node.js (Express) + `python3` parser (stdlib only)
-- **Frontend**: React (Vite)
+### 2) Get the code
+```bash
+git clone https://github.com/Seomzo/Advisor_Satisfaction_Dashboard.git
+cd Advisor_Satisfaction_Dashboard
+```
 
-## Setup (Mac)
-Before installing packages, activate your environment:
+### 3) Install dependencies
+If you use conda, activate your env first (optional):
 
 ```bash
 conda activate cursor
 ```
 
-Install dependencies (workspace install):
+Then install:
 
 ```bash
-cd /Users/omaralsadoon/Desktop/tekion_automations/Advisor_Satisfaction_Dashboard
 npm install
 ```
 
-## Run (dev)
-Terminal 1 (server):
-
+### 4) Build + start (single URL)
 ```bash
-cd /Users/omaralsadoon/Desktop/tekion_automations/Advisor_Satisfaction_Dashboard
-npm run dev --workspace server
-```
-
-Terminal 2 (client):
-
-```bash
-cd /Users/omaralsadoon/Desktop/tekion_automations/Advisor_Satisfaction_Dashboard
-npm run dev --workspace client
-```
-
-Open:
-- Dashboard: `http://localhost:5173/`
-- Upload: `http://localhost:5173/upload`
-
-## Upload workflow (daily)
-### Option A: Upload page
-Go to `http://localhost:5173/upload` and select the latest `.xlsx`.
-
-### Option B: curl
-
-```bash
-curl -F file=@"VW_EmployeeRank - Service_426085 Stevens Creek Volkswagen_12222025_221716.xlsx" http://localhost:5179/api/upload
-```
-
-## Production / big screen
-Build the client, then run the server:
-
-```bash
-cd /Users/omaralsadoon/Desktop/tekion_automations/Advisor_Satisfaction_Dashboard
 npm run build --workspace client
 npm run start --workspace server
 ```
 
-Then open `http://localhost:5179/` on the big screen.
+### 5) Open on the TV
+- Dashboard: `http://localhost:5179/`
+- Upload page: `http://localhost:5179/upload`
+
+## Daily workflow
+1) Open `http://localhost:5179/upload`
+2) Upload today’s Tekion `.xlsx`
+3) You’ll be redirected back to the dashboard automatically

@@ -255,8 +255,34 @@ thead .sticky{border-right:1px solid #ffffff14}
 .notice{margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid #ffffff16; background:#0b1230aa}
 .notice.error{border-color:#ff6b6b55}
 .notice.ok{border-color:#38d99655}
-.hint{margin-top:14px; color:var(--muted); font-size:13px}
-.codeLine{margin-top:8px; padding:8px 10px; border-radius:12px; border:1px solid #ffffff12; background:#0b1230aa; overflow:auto}
+.uploadPanel{max-width:1100px}
+.fileInput{display:none}
+.dropzone{
+  flex: 1 1 620px;
+  border:1px dashed #ffffff2a;
+  border-radius:16px;
+  padding:18px 16px;
+  background:linear-gradient(180deg, #0b1230aa, #0b123066);
+  min-height:86px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+  cursor:pointer;
+}
+.dropzone:hover{border-color:#ffffff44}
+.dropzone.dragOver{
+  border-color:#43d0ff88;
+  box-shadow: 0 0 0 2px #43d0ff22 inset;
+}
+.dropTitle{font-weight:900; font-size:15px}
+.dropSub{color:var(--muted); font-size:13px}
+.linkLike{
+  color:#43d0ff;
+  text-decoration:underline;
+  cursor:pointer;
+  font-weight:800;
+}
 
 @media (max-width: 1200px){
   .content{grid-template-columns:1fr; }

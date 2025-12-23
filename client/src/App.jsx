@@ -3,21 +3,6 @@ import { fetchDashboardData } from "./api.js";
 import { cx, formatPercent, formatScore, safeNumber } from "./utils.js";
 import UploadPage from "./UploadPage.jsx";
 
-function usePathname() {
-  const [path, setPath] = useState(window.location.pathname || "/");
-  useEffect(() => {
-    const onPop = () => setPath(window.location.pathname || "/");
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-  return path;
-}
-
-function navigate(path) {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
-
 function guessKey(columns, candidates) {
   const lowerMap = new Map(columns.map((c) => [c.toLowerCase(), c]));
   for (const c of candidates) {
@@ -35,14 +20,16 @@ function rankColor(rank) {
 }
 
 export default function App() {
-  const pathname = usePathname();
+  const pathname = window.location.pathname || "/";
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   const abortRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   async function load() {
+    const reqId = ++requestIdRef.current;
     setError("");
     setLoading(true);
     abortRef.current?.abort?.();
@@ -50,11 +37,14 @@ export default function App() {
     abortRef.current = controller;
     try {
       const data = await fetchDashboardData({ signal: controller.signal });
-      setDoc(data);
+      if (reqId === requestIdRef.current) setDoc(data);
     } catch (e) {
-      setError(e?.message || "Failed to load data.");
+      // Ignore normal request cancellations (common in dev/StrictMode or rapid reloads)
+      const msg = String(e?.message || "").toLowerCase();
+      if (e?.name === "AbortError" || msg.includes("aborted")) return;
+      if (reqId === requestIdRef.current) setError(e?.message || "Failed to load data.");
     } finally {
-      setLoading(false);
+      if (reqId === requestIdRef.current) setLoading(false);
     }
   }
 
@@ -103,8 +93,7 @@ export default function App() {
     return (
       <UploadPage
         onDone={() => {
-          navigate("/");
-          load();
+          window.location.href = "/";
         }}
       />
     );
@@ -152,9 +141,9 @@ export default function App() {
         <div className="titleBlock">
           <div className="titleRow">
             <div className="title">{title}</div>
-            <div className="pill" onClick={() => navigate("/upload")} role="button" tabIndex={0}>
+            <a className="pill" href="/upload">
               Upload
-            </div>
+            </a>
           </div>
           <div className="subtitle">
             <span className="muted">
