@@ -1,0 +1,271 @@
+:root{
+  --bg0:#070A14;
+  --bg1:#0B1026;
+  --card:#0E1636cc;
+  --line:#24305f;
+  --text:#EAF0FF;
+  --muted:#A7B3DA;
+  --gold:#F6C356;
+  --silver:#C7D2E7;
+  --bronze:#E49A6A;
+  --good:#38d996;
+  --bad:#ff6b6b;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  background:
+    radial-gradient(1200px 800px at 20% 10%, #1a2a6c55, transparent 60%),
+    radial-gradient(900px 700px at 90% 20%, #b21f1f33, transparent 55%),
+    radial-gradient(900px 700px at 60% 90%, #fdbb2d22, transparent 55%),
+    linear-gradient(160deg, var(--bg0), var(--bg1));
+}
+
+.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+.muted{color:var(--muted)}
+.dot{opacity:.7; margin:0 .5rem}
+
+.screen{min-height:100vh; display:flex; flex-direction:column}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding:20px 26px;
+  border-bottom:1px solid #ffffff14;
+  backdrop-filter: blur(10px);
+}
+.titleBlock{min-width:0}
+.titleRow{display:flex; gap:12px; align-items:center}
+.title{
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+.subtitle{margin-top:6px; font-size:13px; opacity:.95}
+.pill{
+  padding:8px 12px;
+  border:1px solid #ffffff22;
+  border-radius:999px;
+  color:var(--text);
+  background:#0b1230aa;
+  cursor:pointer;
+  user-select:none;
+  text-decoration:none;
+  font-weight:600;
+}
+.pill:hover{border-color:#ffffff44}
+
+.status{display:flex; flex-direction:column; gap:6px; align-items:flex-end}
+.statusLine{display:flex; gap:10px; align-items:baseline}
+.statusLine .value{font-weight:700}
+
+.content{
+  padding:18px 22px 26px;
+  display:grid;
+  grid-template-columns: 1.1fr 1.4fr;
+  gap:18px;
+  flex:1;
+  min-height:0;
+}
+
+.panel{
+  border:1px solid #ffffff16;
+  border-radius:16px;
+  padding:18px;
+  background:var(--card);
+  box-shadow: 0 30px 80px #00000066;
+}
+.panel.error{border-color:#ff6b6b55}
+.errorTitle{font-weight:800; margin-bottom:6px}
+.errorBody{color:var(--muted); margin-bottom:12px}
+
+.button{
+  background: linear-gradient(135deg, #5b7cfa, #43d0ff);
+  color:#07102a;
+  font-weight:800;
+  border:0;
+  padding:10px 14px;
+  border-radius:12px;
+  cursor:pointer;
+}
+.button:disabled{opacity:.5; cursor:not-allowed}
+
+.card{
+  border:1px solid #ffffff14;
+  border-radius:16px;
+  background:linear-gradient(180deg, #0c1436cc, #0b1230cc);
+  box-shadow: 0 25px 60px #00000055;
+}
+
+.rowCard{
+  padding:10px 12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.rowLeft{display:flex; align-items:center; gap:12px; min-width:0}
+.rankSmall{font-weight:950; font-size:18px; opacity:.95; width:56px}
+.nameSmall{font-weight:950; font-size:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.rowRight{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap:10px;
+  align-items:center;
+  justify-content:stretch;
+}
+.chip{
+  border:1px solid #ffffff18;
+  border-radius:999px;
+  padding:6px 10px;
+  background:#0b1230aa;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  width:100%;
+}
+.chipLabel{font-size:11px; color:var(--muted)}
+.chipValue{font-size:13px; font-weight:800; text-align:right}
+
+.gold{border-color:#f6c35655}
+.silver{border-color:#c7d2e755}
+.bronze{border-color:#e49a6a55}
+
+.leaderboardWrap{
+  grid-column: 1 / -1;
+  min-height:0;
+}
+.leaderboard{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.accordionCard{
+  overflow:hidden;
+}
+.accordionButton{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:inherit;
+  padding:10px 12px;
+  display:grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(560px, 1fr) 24px;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+}
+.accordionButton:hover{background:#0b123066}
+.accordionBody{
+  border-top:1px solid #ffffff12;
+  padding:12px 12px 14px;
+  background:#0b123055;
+}
+.chev{
+  width:22px;
+  text-align:center;
+  opacity:.9;
+  font-weight:900;
+  justify-self:end;
+}
+.tableHeader{display:flex; justify-content:space-between; align-items:baseline}
+.tableTitle{font-weight:900; font-size:16px}
+.tableHint{font-size:12px; color:var(--muted)}
+
+.kpiGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:10px 12px;
+}
+.kpiItem{
+  border:1px solid #ffffff12;
+  border-radius:14px;
+  padding:10px 10px;
+  background:#0b1230aa;
+  min-width:0;
+}
+.kpiLabel{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:6px;
+  line-height:1.2;
+}
+.kpiValue{
+  font-size:13px;
+  font-weight:800;
+  min-width:0;
+}
+
+/* Make percent cell fit nicely inside KPI cards */
+.kpiValue .pctSvg{width:30px; height:30px}
+.table{border-collapse:separate; border-spacing:0; min-width:1050px; width:100%}
+.th,.td{
+  padding:10px 12px;
+  border-bottom:1px solid #ffffff10;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+.th{
+  position:sticky;
+  top:0;
+  background:#0b1230ee;
+  z-index:3;
+  font-size:12px;
+  text-transform:none;
+  font-weight:900;
+  border-bottom:1px solid #ffffff18;
+}
+.tr:hover .td{background:#0b123077}
+.td{font-size:13px}
+
+.sticky{
+  position:sticky;
+  z-index:2;
+  background:#0b1230ee;
+}
+thead .sticky{z-index:4}
+tbody .sticky{border-right:1px solid #ffffff14}
+thead .sticky{border-right:1px solid #ffffff14}
+
+.pct{display:flex; align-items:center; gap:10px}
+.pctSvg{
+  width:34px;
+  height:34px;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 10px 18px #00000055);
+}
+.pctTrack{
+  fill: none;
+  stroke: #ffffff18;
+  stroke-width: 4;
+}
+.pctProgress{
+  fill: none;
+  stroke: var(--pctColor, #38d996);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.pctText{min-width:62px}
+
+.uploadForm{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+.notice{margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid #ffffff16; background:#0b1230aa}
+.notice.error{border-color:#ff6b6b55}
+.notice.ok{border-color:#38d99655}
+.hint{margin-top:14px; color:var(--muted); font-size:13px}
+.codeLine{margin-top:8px; padding:8px 10px; border-radius:12px; border:1px solid #ffffff12; background:#0b1230aa; overflow:auto}
+
+@media (max-width: 1200px){
+  .content{grid-template-columns:1fr; }
+  .rowRight{
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+  .accordionButton{
+    grid-template-columns: minmax(220px, 1fr) 1fr 24px;
+  }
+}
+
+
