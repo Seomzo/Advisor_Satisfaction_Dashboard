@@ -40,25 +40,50 @@ const upload = multer({
 let cached = null;
 let cachedMtimeMs = 0;
 
+function pickPythonCommand() {
+  if (process.env.PYTHON && String(process.env.PYTHON).trim()) return String(process.env.PYTHON).trim();
+  // Windows usually provides `python` (or `py`). macOS/Linux typically have `python3`.
+  return process.platform === "win32" ? "python" : "python3";
+}
+
+function spawnParser(pythonCmd, scriptPath, xlsxPath, outJsonPath) {
+  return spawn(pythonCmd, [scriptPath, xlsxPath, outJsonPath], {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: process.env,
+  });
+}
+
 function runParser(xlsxPath, outJsonPath) {
   const scriptPath = path.resolve(projectRoot, "server", "scripts", "parse_xlsx.py");
 
   return new Promise((resolve, reject) => {
-    const child = spawn("python3", [scriptPath, xlsxPath, outJsonPath], {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: process.env,
-    });
+    const primaryCmd = pickPythonCommand();
+    let attemptedFallback = false;
 
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (d) => (stdout += d.toString()));
-    child.stderr.on("data", (d) => (stderr += d.toString()));
+    function attach(child) {
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (d) => (stdout += d.toString()));
+      child.stderr.on("data", (d) => (stderr += d.toString()));
 
-    child.on("error", (err) => reject(err));
-    child.on("close", (code) => {
-      if (code === 0) return resolve({ stdout });
-      reject(new Error(`parse_xlsx.py failed (code ${code}). ${stderr || stdout}`));
-    });
+      child.on("error", (err) => {
+        // If the command isn't found, try a reasonable fallback once.
+        if (!attemptedFallback && err && err.code === "ENOENT" && primaryCmd !== "python") {
+          attemptedFallback = true;
+          const fallback = "python";
+          attach(spawnParser(fallback, scriptPath, xlsxPath, outJsonPath));
+          return;
+        }
+        reject(err);
+      });
+
+      child.on("close", (code) => {
+        if (code === 0) return resolve({ stdout });
+        reject(new Error(`parse_xlsx.py failed (code ${code}). ${stderr || stdout}`));
+      });
+    }
+
+    attach(spawnParser(primaryCmd, scriptPath, xlsxPath, outJsonPath));
   });
 }
 
