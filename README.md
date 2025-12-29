@@ -10,21 +10,19 @@ Full-screen dashboard for the daily Tekion **Service Employee Rank** Excel expor
 - **Python 3**: download from [python.org](https://www.python.org/downloads/)
   - On Windows, during install, make sure **“Add Python to PATH”** is checked if you see it.
 
-Verify they work:
+Verify they work (open PowerShell and run):
 
-```bash
+```powershell
 node -v
 npm -v
 python --version
 ```
 
-> On macOS/Linux, if `python --version` fails, try `python3 --version`.
-
 ### 2) Download this project
 
 Option A (recommended, with Git):
 
-```bash
+```powershell
 git clone https://github.com/Seomzo/Advisor_Satisfaction_Dashboard.git
 cd Advisor_Satisfaction_Dashboard
 ```
@@ -33,15 +31,15 @@ Option B (no Git): download the ZIP from GitHub, unzip it, then `cd` into the fo
 
 ### 3) Install the app (one-time)
 
-From the project root:
+From the project root (in PowerShell):
 
-```bash
+```powershell
 npm install
 ```
 
 ### 4) Run the dashboard (TV mode) — **one command**
 
-```bash
+```powershell
 npm run tv
 ```
 
@@ -56,11 +54,11 @@ Stop the app with **Ctrl + C**.
 
 This section assumes you have **never used the terminal** before. Don’t worry — you can follow it like a recipe.
 
-### What you’re installing (prerequisites)
+### What you're installing (prerequisites)
 
 - **Node.js (LTS, 18+)**: runs the dashboard app
 - **Python 3**: converts the uploaded `.xlsx` into data the dashboard can read (no extra Python packages needed)
-- **Git + Git Bash** (recommended): lets you download the project with one command, and gives you a “bash” terminal on Windows
+- **Git** (optional, but recommended): lets you download the project with one command
 
 ### 1) Install prerequisites (Windows)
 
@@ -68,74 +66,56 @@ This section assumes you have **never used the terminal** before. Don’t worry 
 
 1) Open your web browser and install **Node.js LTS** from [nodejs.org](https://nodejs.org/).
 2) During install, keep the default options.
-3) Verify it worked:
+3) Verify it worked (open PowerShell and run):
 
-```bash
+```powershell
 node -v
 npm -v
 ```
 
-If you see version numbers (like `v20.x.x`), you’re good.
+If you see version numbers (like `v20.x.x`), you're good.
 
 #### Install Python 3
 
 1) Install **Python 3** from [python.org](https://www.python.org/downloads/).
 2) Important during setup: check the box **“Add Python to PATH”** if you see it.
-3) Verify it worked:
+3) Verify it worked (in PowerShell):
 
-```bash
+```powershell
 python --version
 ```
 
-If you see `Python 3.x.x`, you’re good.
+If you see `Python 3.x.x`, you're good.
 
-#### Install Git (recommended)
+#### Install Git (optional, but recommended)
 
-Install **Git for Windows** from [git-scm.com](https://git-scm.com/downloads), then verify:
+Install **Git for Windows** from [git-scm.com](https://git-scm.com/downloads), then verify (in PowerShell):
 
-```bash
+```powershell
 git --version
 ```
 
-> If you don’t want Git, you can still download the project as a ZIP (explained below).
+> If you don't want Git, you can still download the project as a ZIP (explained below).
 
-#### Install Git Bash (this is “bash” on Windows)
+### 2) Open PowerShell (where you'll type commands)
 
-On a clean Windows PC, you usually **do not** have bash yet. Installing **Git for Windows** also installs **Git Bash**.
+A **terminal** is a text window where you type commands and press **Enter**. On Windows, we'll use **PowerShell**.
 
-1) Go to [git-scm.com](https://git-scm.com/downloads) and download **Git for Windows**
-2) Run the installer
-3) When it asks questions, the defaults are fine. Two helpful options to keep enabled if you see them:
-   - **“Git Bash Here”** (lets you right-click a folder and open Git Bash there)
-   - **“Use Git from the command line and also from 3rd-party software”** (lets `git` work in PowerShell too)
-4) Open Git Bash:
-   - Start Menu → search **“Git Bash”** → open it
-5) Verify it works:
+**How to open PowerShell:**
 
-```bash
-git --version
-```
+- **Start Menu** → search **"PowerShell"** → click **Windows PowerShell** (or **PowerShell**)
+- Or press **Windows key + X**, then choose **Windows PowerShell**
+- Or if you use **VS Code**: open the folder, then **Terminal → New Terminal** (it will open PowerShell by default)
 
-### 2) Open a terminal (what/where to type commands)
-
-A **terminal** is a text window where you type commands and press **Enter**.
-
-Pick one:
-
-- **Git Bash** (recommended if you want “bash”): Start Menu → search “Git Bash” → open it
-- **Windows Terminal**: Start Menu → search “Windows Terminal” → open it
-- **PowerShell**: Start Menu → search “PowerShell” → open it
-- **VS Code terminal** (if you use VS Code): open the folder, then **Terminal → New Terminal**
-
-> Tip: The commands in this README work in **Git Bash** and usually also in **PowerShell**. If you’re following a guide that says “run this in bash”, choose **Git Bash**.
+> All commands in this README work in PowerShell. You don't need to install anything else!
 
 ### 3) Download the project (choose one option)
 
 #### Option A (recommended): download with Git
 
-In the terminal, copy/paste these lines (paste, then press Enter after each line):
+In PowerShell, copy/paste these lines (paste, then press Enter after each line):
 
-```bash
+```powershell
 git clone https://github.com/Seomzo/Advisor_Satisfaction_Dashboard.git
 cd Advisor_Satisfaction_Dashboard
 ```
@@ -143,38 +123,38 @@ cd Advisor_Satisfaction_Dashboard
 #### Option B: download as ZIP (no Git)
 
 1) Download the repo as a ZIP from GitHub, unzip it
-2) Open a terminal
+2) Open PowerShell
 3) Go into the unzipped folder:
 
-```bash
+```powershell
 cd path\to\Advisor_Satisfaction_Dashboard
 ```
 
 Tip: if your folder path has spaces, wrap it in quotes:
 
-```bash
+```powershell
 cd "C:\Users\YourName\Downloads\Advisor_Satisfaction_Dashboard"
 ```
 
 ### 4) Install the project dependencies (one-time)
 
-Still in the `Advisor_Satisfaction_Dashboard` folder, run:
+Still in the `Advisor_Satisfaction_Dashboard` folder (in PowerShell), run:
 
-```bash
+```powershell
 npm install
 ```
 
 This can take a few minutes the first time.
 
-### 5) Build + start (recommended “TV mode”: single URL)
+### 5) Build + start (recommended "TV mode": single URL)
 
-Run this command:
+Run this command (in PowerShell):
 
-```bash
+```powershell
 npm run tv
 ```
 
-Leave that terminal window open (closing it stops the app).
+Leave that PowerShell window open (closing it stops the app).
 
 ### 6) Open the dashboard
 
@@ -213,7 +193,7 @@ From the project folder:
 
 ### Option A (recommended): one command
 
-```bash
+```powershell
 npm run dev
 ```
 
@@ -223,13 +203,13 @@ Open the site at `http://localhost:5173/` (the client proxies API calls to the s
 
 #### Terminal 1 (server)
 
-```bash
+```powershell
 npm run dev --workspace server
 ```
 
 #### Terminal 2 (client)
 
-```bash
+```powershell
 npm run dev --workspace client
 ```
 
