@@ -46,6 +46,28 @@ CUSTOM_CSS = """
   --bronze: #E49A6A;
   --good: #38d996;
   --bad: #ff6b6b;
+  
+  /* Responsive font sizes - scale with viewport */
+  --font-base: clamp(13px, 1vw, 16px);
+  --font-title: clamp(20px, 2.5vw, 32px);
+  --font-subtitle: clamp(11px, 0.9vw, 14px);
+  --font-rank: clamp(16px, 1.4vw, 22px);
+  --font-name: clamp(16px, 1.4vw, 20px);
+  --font-chip-label: clamp(9px, 0.75vw, 12px);
+  --font-chip-value: clamp(11px, 0.95vw, 15px);
+  --font-kpi-label: clamp(9px, 0.8vw, 12px);
+  --font-kpi-value: clamp(12px, 1vw, 16px);
+  
+  /* Responsive spacing */
+  --spacing-xs: clamp(4px, 0.4vw, 8px);
+  --spacing-sm: clamp(6px, 0.6vw, 10px);
+  --spacing-md: clamp(8px, 0.8vw, 12px);
+  --spacing-lg: clamp(10px, 1vw, 16px);
+  --spacing-xl: clamp(12px, 1.2vw, 20px);
+  
+  /* Card spacing */
+  --card-padding: clamp(8px, 1vw, 14px);
+  --card-gap: clamp(6px, 0.8vw, 12px);
 }
 
 /* Hide Streamlit branding and padding */
@@ -64,8 +86,10 @@ header {visibility: hidden;}
 
 /* Remove default Streamlit padding */
 .block-container {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: clamp(0.5rem, 1.5vw, 2rem) !important;
+    padding-right: clamp(0.5rem, 1.5vw, 2rem) !important;
     max-width: 100% !important;
 }
 
@@ -75,9 +99,10 @@ header {visibility: hidden;}
     color: #07102a;
     font-weight: 800;
     border: 0;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: clamp(8px, 0.8vw, 12px);
     cursor: pointer;
+    font-size: var(--font-base);
 }
 
 .stButton button:hover {
@@ -88,7 +113,7 @@ header {visibility: hidden;}
 .uploadedFile {
     border: 1px solid #ffffff16;
     border-radius: 12px;
-    padding: 10px;
+    padding: var(--spacing-md);
     background: #0b1230aa;
 }
 
@@ -115,6 +140,197 @@ header {visibility: hidden;}
 .dot {
     opacity: 0.7;
     margin: 0 0.5rem;
+}
+
+/* Responsive title and headers */
+.dashboard-title {
+    font-size: var(--font-title);
+    font-weight: 800;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.2;
+}
+
+.dashboard-subtitle {
+    font-size: var(--font-subtitle);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.4;
+}
+
+/* Responsive advisor card */
+.advisor-card {
+    border-radius: clamp(12px, 1.2vw, 18px);
+    margin-bottom: var(--spacing-md);
+    overflow: hidden;
+    box-shadow: 0 clamp(15px, 2vw, 25px) clamp(40px, 4vw, 60px) #00000055;
+}
+
+/* Collapsed view - responsive layout */
+.advisor-collapsed {
+    padding: var(--card-padding);
+    display: grid;
+    grid-template-columns: 
+        minmax(60px, 0.5fr) 
+        minmax(150px, 2fr) 
+        repeat(4, minmax(120px, 1fr)) 
+        minmax(40px, 0.3fr);
+    gap: var(--card-gap);
+    align-items: center;
+}
+
+.advisor-rank {
+    font-weight: 950;
+    font-size: var(--font-rank);
+    opacity: 0.95;
+}
+
+.advisor-name {
+    font-weight: 950;
+    font-size: var(--font-name);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Metric chips - responsive */
+.metric-chip {
+    border: 1px solid #ffffff18;
+    border-radius: 999px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #0b1230aa;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.chip-label {
+    font-size: var(--font-chip-label);
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chip-value {
+    font-size: var(--font-chip-value);
+    font-weight: 800;
+}
+
+/* Expanded view - responsive grid */
+.kpi-grid-container {
+    border-top: 1px solid #ffffff12;
+    padding: var(--spacing-lg);
+    background: #0b123055;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 20vw, 250px), 1fr));
+    gap: var(--spacing-md);
+}
+
+.kpi-card {
+    border: 1px solid #ffffff12;
+    border-radius: clamp(10px, 1vw, 16px);
+    padding: var(--spacing-md);
+    background: #0b1230aa;
+    min-width: 0;
+}
+
+.kpi-label {
+    font-size: var(--font-kpi-label);
+    color: var(--muted);
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.kpi-value {
+    font-size: var(--font-kpi-value);
+    font-weight: 800;
+    min-width: 0;
+    word-wrap: break-word;
+}
+
+/* Circular progress - responsive sizing */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.progress-svg {
+    width: clamp(28px, 2.5vw, 38px);
+    height: clamp(28px, 2.5vw, 38px);
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 8px 16px #00000055);
+    flex-shrink: 0;
+}
+
+.progress-text {
+    font-size: var(--font-kpi-value);
+    min-width: clamp(50px, 5vw, 70px);
+}
+
+/* Media queries for specific breakpoints */
+@media (max-width: 1400px) {
+    .advisor-collapsed {
+        grid-template-columns: 
+            minmax(50px, 0.4fr) 
+            minmax(120px, 1.5fr) 
+            repeat(4, minmax(100px, 1fr)) 
+            minmax(35px, 0.2fr);
+    }
+}
+
+@media (max-width: 1100px) {
+    .advisor-collapsed {
+        grid-template-columns: 
+            minmax(45px, 0.3fr) 
+            minmax(100px, 1.2fr) 
+            repeat(2, minmax(90px, 1fr)) 
+            minmax(30px, 0.2fr);
+        grid-template-rows: auto auto;
+    }
+    
+    .advisor-collapsed > :nth-child(n+5):nth-child(-n+6) {
+        grid-column: 3 / 5;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 25vw, 200px), 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .advisor-collapsed {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+    
+    .metric-chip {
+        width: 100%;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .block-container {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+
+@media (min-width: 1800px) {
+    :root {
+        --font-base: 16px;
+        --font-title: 34px;
+        --font-rank: 24px;
+        --font-name: 22px;
+    }
 }
 </style>
 """
@@ -463,13 +679,13 @@ def render_circular_progress(value, column_name=""):
     pct_color = "#38d996" if good else "#ff6b6b"
     
     svg = f"""
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <svg style="width: 34px; height: 34px; transform: rotate(-90deg); filter: drop-shadow(0 10px 18px #00000055);" viewBox="0 0 36 36">
+    <div class="progress-container">
+        <svg class="progress-svg" viewBox="0 0 36 36">
             <circle cx="18" cy="18" r="{r}" fill="none" stroke="#ffffff18" stroke-width="4"/>
             <circle cx="18" cy="18" r="{r}" fill="none" stroke="{pct_color}" stroke-width="4" 
                     stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/>
         </svg>
-        <span class="mono" style="min-width: 62px;">{format_percent(n)}</span>
+        <span class="mono progress-text">{format_percent(n)}</span>
     </div>
     """
     return svg
@@ -528,8 +744,8 @@ with col3:
 # ============================================================================
 
 if st.session_state.page == 'upload':
-    st.markdown("<h1 style='margin-bottom: 0.5rem;'>Upload daily XLSX</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='muted' style='margin-bottom: 2rem;'>Choose the exported Tekion file. The dashboard updates immediately.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 class='dashboard-title'>Upload daily XLSX</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='muted dashboard-subtitle'>Choose the exported Tekion file. The dashboard updates immediately.</p>", unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader("", type=['xlsx'], key='xlsx_uploader')
     
@@ -569,12 +785,13 @@ else:
     doc = st.session_state.doc
     
     if doc is None:
-        st.markdown("<h1 style='margin-bottom: 0.5rem;'>Advisor Satisfaction</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 class='dashboard-title'>Advisor Satisfaction</h1>", unsafe_allow_html=True)
         st.info("📂 No data available. Please upload an XLSX file to get started.")
         st.markdown("""
-        <div style='padding: 2rem; border: 1px solid #ffffff16; border-radius: 16px; background: #0E1636cc;'>
-            <h3>Getting Started</h3>
-            <ol>
+        <div style='padding: var(--spacing-xl); border: 1px solid #ffffff16; 
+                    border-radius: clamp(12px, 1.2vw, 18px); background: #0E1636cc;'>
+            <h3 style='font-size: var(--font-name);'>Getting Started</h3>
+            <ol style='font-size: var(--font-base); line-height: 1.6;'>
                 <li>Click the "Upload" button in the top right</li>
                 <li>Select your Tekion Service Employee Rank XLSX file</li>
                 <li>The dashboard will load automatically</li>
@@ -623,7 +840,7 @@ else:
             dealer_number = str(first_row.get(key_dealer, '')).strip()
         
         # Header
-        st.markdown(f"<h1 style='margin-bottom: 0.5rem;'>{title}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1 class='dashboard-title'>{title}</h1>", unsafe_allow_html=True)
         
         subtitle_parts = []
         if dealer_number:
@@ -637,10 +854,10 @@ else:
         subtitle_parts.append("Period: 1D")
         
         subtitle = " <span class='dot'>•</span> ".join(subtitle_parts)
-        st.markdown(f"<p class='muted' style='margin-bottom: 1rem;'>{subtitle}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='muted dashboard-subtitle'>{subtitle}</p>", unsafe_allow_html=True)
         
         exported_display = meta.get('Exported Raw') or meta.get('Exported') or '—'
-        st.markdown(f"<p class='muted' style='margin-bottom: 2rem;'>Last update: <strong>{exported_display}</strong></p>", unsafe_allow_html=True)
+        st.markdown(f"<p class='muted dashboard-subtitle'>Last update: <strong>{exported_display}</strong></p>", unsafe_allow_html=True)
         
         # Detail columns (exclude main fields)
         exclude = set([key_employee, key_dealer, key_area, key_region, key_rank, key_score, key_impact, key_total, key_completes])
@@ -666,47 +883,46 @@ else:
                 rank_class = rank_color(rank)
                 border_color = "#f6c35655" if rank == 1 else "#c7d2e755" if rank == 2 else "#e49a6a55" if rank == 3 else "#ffffff14"
                 
-                # Card container
+                # Card container with responsive classes
                 with st.container():
                     st.markdown(f"""
-                    <div style='border: 2px solid {border_color}; border-radius: 16px; 
-                                background: linear-gradient(180deg, #0c1436cc, #0b1230cc); 
-                                box-shadow: 0 25px 60px #00000055; margin-bottom: 10px; overflow: hidden;'>
+                    <div class='advisor-card' style='border: 2px solid {border_color}; 
+                                background: linear-gradient(180deg, #0c1436cc, #0b1230cc);'>
                     """, unsafe_allow_html=True)
                     
-                    # Header row (always visible)
+                    # Header row (always visible) - using responsive layout
                     col_rank, col_name, col_score, col_impact, col_records, col_completes, col_expand = st.columns([0.8, 2, 1.5, 1.5, 1.5, 1.5, 0.5])
                     
                     with col_rank:
-                        st.markdown(f"<div style='font-weight: 950; font-size: 18px; padding: 10px;'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='advisor-rank' style='padding: var(--card-padding);'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
                     with col_name:
-                        st.markdown(f"<div style='font-weight: 950; font-size: 18px; padding: 10px;'>{name}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='advisor-name' style='padding: var(--card-padding);'>{name}</div>", unsafe_allow_html=True)
                     with col_score:
                         st.markdown(f"""
-                        <div style='border: 1px solid #ffffff18; border-radius: 999px; padding: 6px 10px; background: #0b1230aa; margin: 5px;'>
-                            <div style='font-size: 11px; color: #A7B3DA;'>Satisfaction Score</div>
-                            <div style='font-size: 13px; font-weight: 800;'>{format_score(score)}</div>
+                        <div class='metric-chip'>
+                            <div class='chip-label'>Satisfaction Score</div>
+                            <div class='chip-value'>{format_score(score)}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_impact:
                         st.markdown(f"""
-                        <div style='border: 1px solid #ffffff18; border-radius: 999px; padding: 6px 10px; background: #0b1230aa; margin: 5px;'>
-                            <div style='font-size: 11px; color: #A7B3DA;'>Impact</div>
-                            <div style='font-size: 13px; font-weight: 800;'>{safe_number(impact) if safe_number(impact) is not None else '—'}</div>
+                        <div class='metric-chip'>
+                            <div class='chip-label'>Impact</div>
+                            <div class='chip-value'>{safe_number(impact) if safe_number(impact) is not None else '—'}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_records:
                         st.markdown(f"""
-                        <div style='border: 1px solid #ffffff18; border-radius: 999px; padding: 6px 10px; background: #0b1230aa; margin: 5px;'>
-                            <div style='font-size: 11px; color: #A7B3DA;'>Records</div>
-                            <div style='font-size: 13px; font-weight: 800;'>{safe_number(total) if safe_number(total) is not None else '—'}</div>
+                        <div class='metric-chip'>
+                            <div class='chip-label'>Records</div>
+                            <div class='chip-value'>{safe_number(total) if safe_number(total) is not None else '—'}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_completes:
                         st.markdown(f"""
-                        <div style='border: 1px solid #ffffff18; border-radius: 999px; padding: 6px 10px; background: #0b1230aa; margin: 5px;'>
-                            <div style='font-size: 11px; color: #A7B3DA;'>Completes</div>
-                            <div style='font-size: 13px; font-weight: 800;'>{safe_number(completes) if safe_number(completes) is not None else '—'}</div>
+                        <div class='metric-chip'>
+                            <div class='chip-label'>Completes</div>
+                            <div class='chip-value'>{safe_number(completes) if safe_number(completes) is not None else '—'}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_expand:
@@ -718,27 +934,24 @@ else:
                                 st.session_state.expanded_rows.add(row_id)
                             st.rerun()
                     
-                    # Expanded details
+                    # Expanded details with responsive grid
                     if row_id in st.session_state.expanded_rows:
-                        st.markdown("<div style='border-top: 1px solid #ffffff12; padding: 12px; background: #0b123055;'>", unsafe_allow_html=True)
+                        st.markdown("<div class='kpi-grid-container'><div class='kpi-grid'>", unsafe_allow_html=True)
                         
-                        # KPI Grid
-                        num_cols = 3
-                        cols_per_row = st.columns(num_cols)
-                        for i, col_name in enumerate(detail_columns):
-                            with cols_per_row[i % num_cols]:
-                                value = row.get(col_name)
-                                cell_type = field_types.get(col_name, 'string')
-                                rendered = render_cell(value, cell_type, col_name)
-                                
-                                st.markdown(f"""
-                                <div style='border: 1px solid #ffffff12; border-radius: 14px; padding: 10px; background: #0b1230aa; margin-bottom: 10px;'>
-                                    <div style='font-size: 11px; color: #A7B3DA; margin-bottom: 6px;'>{col_name}</div>
-                                    <div style='font-size: 13px; font-weight: 800;'>{rendered}</div>
-                                </div>
-                                """, unsafe_allow_html=True)
+                        # KPI Grid - responsive auto-fit layout
+                        for col_name in detail_columns:
+                            value = row.get(col_name)
+                            cell_type = field_types.get(col_name, 'string')
+                            rendered = render_cell(value, cell_type, col_name)
+                            
+                            st.markdown(f"""
+                            <div class='kpi-card'>
+                                <div class='kpi-label'>{col_name}</div>
+                                <div class='kpi-value'>{rendered}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
                         
-                        st.markdown("</div>", unsafe_allow_html=True)
+                        st.markdown("</div></div>", unsafe_allow_html=True)
                     
                     st.markdown("</div>", unsafe_allow_html=True)
 
