@@ -717,16 +717,8 @@ def render_circular_progress(value, column_name=""):
     good = n >= threshold
     pct_color = "#38d996" if good else "#ff6b6b"
     
-    svg = f"""
-    <div class="progress-container">
-        <svg class="progress-svg" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="{r}" fill="none" stroke="#ffffff18" stroke-width="4"/>
-            <circle cx="18" cy="18" r="{r}" fill="none" stroke="{pct_color}" stroke-width="4" 
-                    stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/>
-        </svg>
-        <span class="mono progress-text">{format_percent(n)}</span>
-    </div>
-    """
+    # Return clean HTML without extra whitespace
+    svg = f'<div class="progress-container"><svg class="progress-svg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="{r}" fill="none" stroke="#ffffff18" stroke-width="4"/><circle cx="18" cy="18" r="{r}" fill="none" stroke="{pct_color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/></svg><span class="mono progress-text">{format_percent(n)}</span></div>'
     return svg
 
 def render_cell(value, cell_type, column_name=""):
@@ -975,7 +967,8 @@ else:
                     
                     # Expanded details with responsive grid
                     if row_id in st.session_state.expanded_rows:
-                        st.markdown("<div class='kpi-grid-container'><div class='kpi-grid'>", unsafe_allow_html=True)
+                        # Build entire grid HTML as single string to preserve CSS grid layout
+                        grid_html = "<div class='kpi-grid-container'><div class='kpi-grid'>"
                         
                         # KPI Grid - responsive auto-fit layout
                         for col_name in detail_columns:
@@ -983,14 +976,14 @@ else:
                             cell_type = field_types.get(col_name, 'string')
                             rendered = render_cell(value, cell_type, col_name)
                             
-                            st.markdown(f"""
-                            <div class='kpi-card'>
-                                <div class='kpi-label'>{col_name}</div>
-                                <div class='kpi-value'>{rendered}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            # Escape HTML in column name to prevent breaking the layout
+                            safe_col_name = str(col_name).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
+                            
+                            # Build card HTML - single line to avoid whitespace issues
+                            grid_html += f"<div class='kpi-card'><div class='kpi-label'>{safe_col_name}</div><div class='kpi-value'>{rendered}</div></div>"
                         
-                        st.markdown("</div></div>", unsafe_allow_html=True)
+                        grid_html += "</div></div>"
+                        st.markdown(grid_html, unsafe_allow_html=True)
                     
                     st.markdown("</div>", unsafe_allow_html=True)
 
