@@ -216,33 +216,45 @@ header {visibility: hidden;}
     font-weight: 800;
 }
 
-/* Expanded view - responsive grid */
+/* Expanded view - responsive grid - HORIZONTAL OPTIMIZED */
 .kpi-grid-container {
     border-top: 1px solid #ffffff12;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
     background: #0b123055;
 }
 
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 20vw, 250px), 1fr));
-    gap: var(--spacing-md);
+    /* Optimize for horizontal layout - more columns, fewer rows */
+    grid-template-columns: repeat(auto-fit, minmax(clamp(160px, 15vw, 220px), 1fr));
+    gap: var(--spacing-sm) var(--spacing-md);
+    grid-auto-flow: row;
+    align-items: stretch;
 }
 
 .kpi-card {
     border: 1px solid #ffffff12;
-    border-radius: clamp(10px, 1vw, 16px);
-    padding: var(--spacing-md);
+    border-radius: clamp(10px, 1vw, 14px);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: #0b1230aa;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: clamp(65px, 7vw, 85px);
 }
 
 .kpi-label {
     font-size: var(--font-kpi-label);
     color: var(--muted);
-    margin-bottom: var(--spacing-sm);
-    line-height: 1.3;
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.25;
     word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .kpi-value {
@@ -250,6 +262,7 @@ header {visibility: hidden;}
     font-weight: 800;
     min-width: 0;
     word-wrap: break-word;
+    line-height: 1.2;
 }
 
 /* Circular progress - responsive sizing */
@@ -272,7 +285,7 @@ header {visibility: hidden;}
     min-width: clamp(50px, 5vw, 70px);
 }
 
-/* Media queries for specific breakpoints */
+/* Media queries for specific breakpoints - HORIZONTAL OPTIMIZED */
 @media (max-width: 1400px) {
     .advisor-collapsed {
         grid-template-columns: 
@@ -280,6 +293,11 @@ header {visibility: hidden;}
             minmax(120px, 1.5fr) 
             repeat(4, minmax(100px, 1fr)) 
             minmax(35px, 0.2fr);
+    }
+    
+    .kpi-grid {
+        /* Keep 5-6 columns even on medium screens */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 14vw, 200px), 1fr));
     }
 }
 
@@ -298,7 +316,15 @@ header {visibility: hidden;}
     }
     
     .kpi-grid {
-        grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 25vw, 200px), 1fr));
+        /* Keep 4-5 columns on tablets - prioritize horizontal */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 18vw, 180px), 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .kpi-grid {
+        /* 3-4 columns on smaller tablets */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(130px, 22vw, 170px), 1fr));
     }
 }
 
@@ -315,12 +341,20 @@ header {visibility: hidden;}
     }
     
     .kpi-grid {
-        grid-template-columns: 1fr;
+        /* Still maintain 2-3 columns on mobile landscape */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 30vw, 160px), 1fr));
     }
     
     .block-container {
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .kpi-grid {
+        /* Only go to 2 columns on very small screens */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 45vw, 200px), 1fr));
     }
 }
 
@@ -330,6 +364,11 @@ header {visibility: hidden;}
         --font-title: 34px;
         --font-rank: 24px;
         --font-name: 22px;
+    }
+    
+    .kpi-grid {
+        /* Maximum columns on large screens */
+        grid-template-columns: repeat(auto-fit, minmax(clamp(160px, 12vw, 220px), 1fr));
     }
 }
 </style>
