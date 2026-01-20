@@ -35,28 +35,28 @@ st.set_page_config(
 CUSTOM_CSS = """
 <style>
 :root {
-  --bg0: #070A14;
-  --bg1: #0B1026;
-  --card: #0E1636cc;
-  --line: #24305f;
-  --text: #EAF0FF;
-  --muted: #A7B3DA;
-  --gold: #F6C356;
-  --silver: #C7D2E7;
-  --bronze: #E49A6A;
-  --good: #38d996;
-  --bad: #ff6b6b;
+  --bg0: #FFFFFF;
+  --bg1: #F9FAFB;
+  --card: #F3F4F6;
+  --line: #E5E7EB;
+  --text: #111827;
+  --muted: #6B7280;
+  --gold: #F59E0B;
+  --silver: #9CA3AF;
+  --bronze: #D97706;
+  --good: #10B981;
+  --bad: #EF4444;
   
   /* Responsive font sizes - scale with viewport */
-  --font-base: clamp(13px, 1vw, 16px);
-  --font-title: clamp(20px, 2.5vw, 32px);
-  --font-subtitle: clamp(11px, 0.9vw, 14px);
-  --font-rank: clamp(16px, 1.4vw, 22px);
-  --font-name: clamp(16px, 1.4vw, 20px);
-  --font-chip-label: clamp(9px, 0.75vw, 12px);
-  --font-chip-value: clamp(11px, 0.95vw, 15px);
-  --font-kpi-label: clamp(9px, 0.8vw, 12px);
-  --font-kpi-value: clamp(12px, 1vw, 16px);
+  --font-base: clamp(14px, 1.1vw, 18px);
+  --font-title: clamp(22px, 2.8vw, 36px);
+  --font-subtitle: clamp(12px, 1vw, 16px);
+  --font-rank: clamp(18px, 1.6vw, 26px);
+  --font-name: clamp(18px, 1.6vw, 24px);
+  --font-chip-label: clamp(11px, 0.9vw, 14px);
+  --font-chip-value: clamp(14px, 1.2vw, 20px);
+  --font-kpi-label: clamp(11px, 0.95vw, 14px);
+  --font-kpi-value: clamp(15px, 1.3vw, 20px);
   
   /* Responsive spacing */
   --spacing-xs: clamp(4px, 0.4vw, 8px);
@@ -75,13 +75,10 @@ CUSTOM_CSS = """
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
-/* Full screen dark background */
+/* Full screen light background */
 .stApp {
-    background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c55, transparent 60%),
-                radial-gradient(900px 700px at 90% 20%, #b21f1f33, transparent 55%),
-                radial-gradient(900px 700px at 60% 90%, #fdbb2d22, transparent 55%),
-                linear-gradient(160deg, #070A14, #0B1026);
-    color: #EAF0FF;
+    background: linear-gradient(160deg, #FFFFFF, #F9FAFB);
+    color: #111827;
 }
 
 /* Remove default Streamlit padding */
@@ -95,33 +92,38 @@ header {visibility: hidden;}
 
 /* Custom styling for elements */
 .stButton button {
-    background: linear-gradient(135deg, #5b7cfa, #43d0ff);
-    color: #07102a;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    color: #111827;
     font-weight: 800;
-    border: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: clamp(8px, 0.8vw, 12px);
     cursor: pointer;
     font-size: var(--font-base);
+    transition: all 0.2s ease;
 }
 
 .stButton button:hover {
-    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
 
 /* File uploader styling */
 .uploadedFile {
-    border: 1px solid #ffffff16;
+    border: 1px solid #E5E7EB;
     border-radius: 12px;
     padding: var(--spacing-md);
-    background: #0b1230aa;
+    background: #F9FAFB;
 }
 
 /* Expander styling */
 .streamlit-expanderHeader {
     background: transparent !important;
     border: none !important;
-    color: #EAF0FF !important;
+    color: #111827 !important;
     font-weight: 800 !important;
 }
 
@@ -161,7 +163,7 @@ header {visibility: hidden;}
     border-radius: clamp(12px, 1.2vw, 18px);
     margin-bottom: var(--spacing-md);
     overflow: hidden;
-    box-shadow: 0 clamp(15px, 2vw, 25px) clamp(40px, 4vw, 60px) #00000055;
+    box-shadow: 0 clamp(4px, 0.5vw, 8px) clamp(12px, 1.5vw, 20px) rgba(0, 0, 0, 0.1);
 }
 
 /* Collapsed view - responsive layout */
@@ -169,11 +171,11 @@ header {visibility: hidden;}
     padding: var(--card-padding);
     display: grid;
     grid-template-columns: 
-        minmax(60px, 0.5fr) 
+        minmax(50px, 0.4fr) 
         minmax(150px, 2fr) 
         repeat(4, minmax(120px, 1fr)) 
         minmax(40px, 0.3fr);
-    gap: var(--card-gap);
+    gap: clamp(4px, 0.5vw, 8px);
     align-items: center;
 }
 
@@ -193,13 +195,13 @@ header {visibility: hidden;}
 
 /* Metric chips - responsive */
 .metric-chip {
-    border: 1px solid #ffffff18;
+    border: 1px solid #E5E7EB;
     border-radius: 999px;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: #0b1230aa;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: #F9FAFB;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-xs);
+    gap: var(--spacing-sm);
     min-width: 0;
 }
 
@@ -218,9 +220,9 @@ header {visibility: hidden;}
 
 /* Expanded view - responsive grid - HORIZONTAL OPTIMIZED */
 .kpi-grid-container {
-    border-top: 1px solid #ffffff12;
+    border-top: 1px solid #E5E7EB;
     padding: var(--spacing-md) var(--spacing-lg);
-    background: #0b123055;
+    background: #F9FAFB;
 }
 
 .kpi-grid {
@@ -233,15 +235,15 @@ header {visibility: hidden;}
 }
 
 .kpi-card {
-    border: 1px solid #ffffff12;
+    border: 1px solid #E5E7EB;
     border-radius: clamp(10px, 1vw, 14px);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: #0b1230aa;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: #FFFFFF;
     min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: clamp(65px, 7vw, 85px);
+    min-height: clamp(75px, 8vw, 95px);
 }
 
 .kpi-label {
@@ -273,16 +275,17 @@ header {visibility: hidden;}
 }
 
 .progress-svg {
-    width: clamp(28px, 2.5vw, 38px);
-    height: clamp(28px, 2.5vw, 38px);
+    width: clamp(36px, 3vw, 48px);
+    height: clamp(36px, 3vw, 48px);
     transform: rotate(-90deg);
-    filter: drop-shadow(0 8px 16px #00000055);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     flex-shrink: 0;
 }
 
 .progress-text {
-    font-size: var(--font-kpi-value);
-    min-width: clamp(50px, 5vw, 70px);
+    font-size: var(--font-chip-value);
+    font-weight: 800;
+    min-width: clamp(55px, 5.5vw, 80px);
 }
 
 /* Media queries for specific breakpoints - HORIZONTAL OPTIMIZED */
@@ -715,10 +718,34 @@ def render_circular_progress(value, column_name=""):
     dash = (clamped / 100) * c
     threshold = percent_threshold_for_column(column_name)
     good = n >= threshold
-    pct_color = "#38d996" if good else "#ff6b6b"
+    pct_color = "#10B981" if good else "#EF4444"
     
     # Return clean HTML without extra whitespace
-    svg = f'<div class="progress-container"><svg class="progress-svg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="{r}" fill="none" stroke="#ffffff18" stroke-width="4"/><circle cx="18" cy="18" r="{r}" fill="none" stroke="{pct_color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/></svg><span class="mono progress-text">{format_percent(n)}</span></div>'
+    svg = f'<div class="progress-container"><svg class="progress-svg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="{r}" fill="none" stroke="#E5E7EB" stroke-width="4"/><circle cx="18" cy="18" r="{r}" fill="none" stroke="{pct_color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/></svg><span class="mono progress-text">{format_percent(n)}</span></div>'
+    return svg
+
+def render_score_progress(value):
+    """Render circular progress indicator for satisfaction score (out of 1100)"""
+    n = safe_number(value)
+    if n is None:
+        return "—"
+    
+    # Calculate percentage out of 1100
+    percentage = (n / 1100) * 100
+    clamped = max(0, min(100, percentage))
+    
+    r = 12
+    c = 2 * 3.14159 * r
+    dash = (clamped / 100) * c
+    
+    # Red if under 895, green otherwise
+    score_color = "#EF4444" if n < 895 else "#10B981"
+    
+    # Display the raw score, not percentage
+    score_display = format_score(n)
+    
+    # Return clean HTML without extra whitespace
+    svg = f'<div class="progress-container"><svg class="progress-svg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="{r}" fill="none" stroke="#E5E7EB" stroke-width="4"/><circle cx="18" cy="18" r="{r}" fill="none" stroke="{score_color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="{dash} {c - dash}"/></svg><span class="mono progress-text">{score_display}</span></div>'
     return svg
 
 def render_cell(value, cell_type, column_name=""):
@@ -819,8 +846,8 @@ else:
         st.markdown("<h1 class='dashboard-title'>Advisor Satisfaction</h1>", unsafe_allow_html=True)
         st.info("📂 No data available. Please upload an XLSX file to get started.")
         st.markdown("""
-        <div style='padding: var(--spacing-xl); border: 1px solid #ffffff16; 
-                    border-radius: clamp(12px, 1.2vw, 18px); background: #0E1636cc;'>
+        <div style='padding: var(--spacing-xl); border: 1px solid #E5E7EB; 
+                    border-radius: clamp(12px, 1.2vw, 18px); background: #F9FAFB;'>
             <h3 style='font-size: var(--font-name);'>Getting Started</h3>
             <ol style='font-size: var(--font-base); line-height: 1.6;'>
                 <li>Click the "Upload" button in the top right</li>
@@ -848,6 +875,11 @@ else:
         key_dealer = guess_key(columns, ["Dealer"])
         key_area = guess_key(columns, ["Area"])
         key_region = guess_key(columns, ["Region"])
+        
+        # Additional columns for collapsed view
+        key_fixed_first = guess_key(columns, ["Fixed right first time"])
+        key_spoke_immediately = guess_key(columns, ["Spoke to advisor immediately"])
+        key_kept_informed = guess_key(columns, ["Kept informed"])
         
         # Sort by rank
         sorted_rows = sorted(rows, key=lambda r: safe_number(r.get(key_rank)) if key_rank else float('inf'))
@@ -890,8 +922,8 @@ else:
         exported_display = meta.get('Exported Raw') or meta.get('Exported') or '—'
         st.markdown(f"<p class='muted dashboard-subtitle'>Last update: <strong>{exported_display}</strong></p>", unsafe_allow_html=True)
         
-        # Detail columns (exclude main fields)
-        exclude = set([key_employee, key_dealer, key_area, key_region, key_rank, key_score, key_impact, key_total, key_completes])
+        # Detail columns (exclude only collapsed view fields and metadata)
+        exclude = set([key_employee, key_dealer, key_area, key_region, key_rank, key_score, key_fixed_first, key_spoke_immediately, key_kept_informed])
         exclude = {c for c in exclude if c}
         detail_columns = [c for c in columns if c not in exclude]
         
@@ -910,50 +942,73 @@ else:
                 # Unique ID for expander
                 row_id = f"{rank}_{name}_{idx}"
                 
-                # Rank styling
+                # Rank styling - all dividers now gray
                 rank_class = rank_color(rank)
-                border_color = "#f6c35655" if rank == 1 else "#c7d2e755" if rank == 2 else "#e49a6a55" if rank == 3 else "#ffffff14"
+                border_color = "#E5E7EB"
                 
                 # Card container with responsive classes
                 with st.container():
                     st.markdown(f"""
                     <div class='advisor-card' style='border: 2px solid {border_color}; 
-                                background: linear-gradient(180deg, #0c1436cc, #0b1230cc);'>
+                                background: linear-gradient(180deg, #FFFFFF, #F9FAFB);'>
                     """, unsafe_allow_html=True)
                     
+                    # Get values for collapsed view metrics
+                    fixed_first = row.get(key_fixed_first) if key_fixed_first else None
+                    spoke_immediately = row.get(key_spoke_immediately) if key_spoke_immediately else None
+                    kept_informed = row.get(key_kept_informed) if key_kept_informed else None
+                    
+                    # Get field types for rendering
+                    fixed_first_type = field_types.get(key_fixed_first, 'string') if key_fixed_first else 'string'
+                    spoke_immediately_type = field_types.get(key_spoke_immediately, 'string') if key_spoke_immediately else 'string'
+                    kept_informed_type = field_types.get(key_kept_informed, 'string') if key_kept_informed else 'string'
+                    
                     # Header row (always visible) - using responsive layout
-                    col_rank, col_name, col_score, col_impact, col_records, col_completes, col_expand = st.columns([0.8, 2, 1.5, 1.5, 1.5, 1.5, 0.5])
+                    col_rank, col_name, col_score, col_fixed, col_spoke, col_kept, col_expand = st.columns([0.5, 2, 1.5, 1.5, 1.5, 1.5, 0.5], gap="small")
                     
                     with col_rank:
-                        st.markdown(f"<div class='advisor-rank' style='padding: var(--card-padding);'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='advisor-rank' style='padding: var(--spacing-sm) var(--spacing-xs);'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
                     with col_name:
-                        st.markdown(f"<div class='advisor-name' style='padding: var(--card-padding);'>{name}</div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='advisor-name' style='padding: var(--spacing-sm) var(--spacing-xs);'>{name}</div>", unsafe_allow_html=True)
                     with col_score:
+                        score_rendered = render_score_progress(score)
                         st.markdown(f"""
                         <div class='metric-chip'>
                             <div class='chip-label'>Satisfaction Score</div>
-                            <div class='chip-value'>{format_score(score)}</div>
+                            <div>{score_rendered}</div>
                         </div>
                         """, unsafe_allow_html=True)
-                    with col_impact:
+                    with col_fixed:
+                        if fixed_first_type == 'percent':
+                            rendered_value = render_circular_progress(fixed_first, key_fixed_first or "")
+                        else:
+                            rendered_value = f'<span class="mono chip-value">{safe_number(fixed_first) if safe_number(fixed_first) is not None else "—"}</span>'
                         st.markdown(f"""
                         <div class='metric-chip'>
-                            <div class='chip-label'>Impact</div>
-                            <div class='chip-value'>{safe_number(impact) if safe_number(impact) is not None else '—'}</div>
+                            <div class='chip-label'>Fixed right first time</div>
+                            <div>{rendered_value}</div>
                         </div>
                         """, unsafe_allow_html=True)
-                    with col_records:
+                    with col_spoke:
+                        if spoke_immediately_type == 'percent':
+                            rendered_value = render_circular_progress(spoke_immediately, key_spoke_immediately or "")
+                        else:
+                            rendered_value = f'<span class="mono chip-value">{safe_number(spoke_immediately) if safe_number(spoke_immediately) is not None else "—"}</span>'
                         st.markdown(f"""
                         <div class='metric-chip'>
-                            <div class='chip-label'>Records</div>
-                            <div class='chip-value'>{safe_number(total) if safe_number(total) is not None else '—'}</div>
+                            <div class='chip-label'>Spoke to advisor immediately</div>
+                            <div>{rendered_value}</div>
                         </div>
                         """, unsafe_allow_html=True)
-                    with col_completes:
+                    with col_kept:
+                        if kept_informed_type == 'percent':
+                            rendered_value = render_circular_progress(kept_informed, key_kept_informed or "")
+                        else:
+                            rendered_value = f'<span class="mono chip-value">{safe_number(kept_informed) if safe_number(kept_informed) is not None else "—"}</span>'
                         st.markdown(f"""
                         <div class='metric-chip'>
-                            <div class='chip-label'>Completes</div>
-                            <div class='chip-value'>{safe_number(completes) if safe_number(completes) is not None else '—'}</div>
+                            <div class='chip-label'>Kept informed</div>
+                            <div>{rendered_value}</div>
                         </div>
                         """, unsafe_allow_html=True)
                     with col_expand:
