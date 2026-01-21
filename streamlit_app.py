@@ -53,9 +53,9 @@ CUSTOM_CSS = """
   --font-subtitle: clamp(12px, 1vw, 16px);
   --font-rank: clamp(18px, 1.6vw, 26px);
   --font-name: clamp(18px, 1.6vw, 24px);
-  --font-chip-label: clamp(11px, 0.9vw, 14px);
+  --font-chip-label: clamp(12px, 1vw, 15px);
   --font-chip-value: clamp(14px, 1.2vw, 20px);
-  --font-kpi-label: clamp(11px, 0.95vw, 14px);
+  --font-kpi-label: clamp(12px, 1vw, 15px);
   --font-kpi-value: clamp(15px, 1.3vw, 20px);
   
   /* Responsive spacing */
@@ -207,6 +207,7 @@ header {visibility: hidden;}
 
 .chip-label {
     font-size: var(--font-chip-label);
+    font-weight: 700;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
@@ -248,6 +249,7 @@ header {visibility: hidden;}
 
 .kpi-label {
     font-size: var(--font-kpi-label);
+    font-weight: 700;
     color: var(--muted);
     margin-bottom: var(--spacing-xs);
     line-height: 1.25;
