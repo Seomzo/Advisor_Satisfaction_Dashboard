@@ -689,6 +689,13 @@ def normalize_column_name(name):
     """Normalize column name for comparison"""
     return re.sub(r"\s+", " ", str(name or "").strip().lower())
 
+def normalize_display_name(name):
+    """Normalize employee name to title case for consistent display"""
+    if not name or name == "—":
+        return name
+    # Convert to title case (first letter of each word capitalized)
+    return str(name).strip().title()
+
 def percent_threshold_for_column(column_name):
     """Get threshold for green/red coloring"""
     key = normalize_column_name(column_name)
@@ -759,6 +766,58 @@ def render_cell(value, cell_type, column_name=""):
         return f'<span class="mono">{n if n is not None else "—"}</span>'
     return f'<span>{value if value not in ["", None] else "—"}</span>'
 
+def render_technician_leaderboard(doc):
+    """Render simplified technician leaderboard showing only rank, name, and Fixed Right First Time"""
+    if doc is None:
+        st.markdown("<p class='muted'>No technician data available</p>", unsafe_allow_html=True)
+        return
+    
+    dataset = doc.get('dataset', {})
+    columns = dataset.get('columns', [])
+    rows = dataset.get('rows', [])
+    field_types = doc.get('fieldTypes', {})
+    
+    # Find key columns
+    key_employee = guess_key(columns, ["Employee", "Technician", "Service Technician", "Name"])
+    key_rank = guess_key(columns, ["Rank"])
+    key_fixed_first = guess_key(columns, ["Fixed right first time"])
+    
+    # Sort by rank
+    sorted_rows = sorted(rows, key=lambda r: safe_number(r.get(key_rank)) if key_rank else float('inf'))
+    sorted_rows = [r for r in sorted_rows if safe_number(r.get(key_rank) if key_rank else None) is not None]
+    
+    if not sorted_rows:
+        st.warning("No technician data found")
+        return
+    
+    # Render simplified cards - all in one line
+    for idx, row in enumerate(sorted_rows):
+        rank = safe_number(row.get(key_rank) if key_rank else None)
+        name = normalize_display_name(row.get(key_employee)) if key_employee else "—"
+        fixed_first = row.get(key_fixed_first) if key_fixed_first else None
+        fixed_first_type = field_types.get(key_fixed_first, 'string') if key_fixed_first else 'string'
+        
+        # Fixed Right First Time percentage
+        if fixed_first_type == 'percent':
+            rendered_value = render_circular_progress(fixed_first, key_fixed_first or "Fixed right first time")
+        else:
+            rendered_value = f'<span class="mono" style="font-weight: 800;">{safe_number(fixed_first) if safe_number(fixed_first) is not None else "—"}</span>'
+        
+        # Compact single-line card
+        st.markdown(f"""
+        <div style='border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 12px; 
+                    background: linear-gradient(180deg, #FFFFFF, #F9FAFB); margin-bottom: 6px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);'>
+            <div style='display: flex; align-items: center; gap: 8px; justify-content: space-between;'>
+                <div style='display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;'>
+                    <div style='font-size: 15px; font-weight: 950; min-width: 25px;'>#{int(rank) if rank else '—'}</div>
+                    <div style='font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>{name}</div>
+                </div>
+                <div style='flex-shrink: 0;'>{rendered_value}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 # ============================================================================
 # SESSION STATE INITIALIZATION
 # ============================================================================
@@ -766,17 +825,35 @@ def render_cell(value, cell_type, column_name=""):
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
-if 'doc' not in st.session_state:
+# Advisors data (backward compatible with 'doc')
+if 'doc_advisors' not in st.session_state:
     # Try to load from storage/latest.json if exists
     storage_path = Path(__file__).parent / 'storage' / 'latest.json'
     if storage_path.exists():
         try:
             with open(storage_path, 'r') as f:
-                st.session_state.doc = json.load(f)
+                st.session_state.doc_advisors = json.load(f)
         except:
-            st.session_state.doc = None
+            st.session_state.doc_advisors = None
     else:
-        st.session_state.doc = None
+        st.session_state.doc_advisors = None
+
+# Technicians data
+if 'doc_technicians' not in st.session_state:
+    # Try to load from storage/technicians.json if exists
+    storage_path = Path(__file__).parent / 'storage' / 'technicians.json'
+    if storage_path.exists():
+        try:
+            with open(storage_path, 'r') as f:
+                st.session_state.doc_technicians = json.load(f)
+        except:
+            st.session_state.doc_technicians = None
+    else:
+        st.session_state.doc_technicians = None
+
+# Backward compatibility
+if 'doc' not in st.session_state:
+    st.session_state.doc = st.session_state.doc_advisors
 
 if 'expanded_rows' not in st.session_state:
     st.session_state.expanded_rows = set()
@@ -805,18 +882,21 @@ with col3:
 
 if st.session_state.page == 'upload':
     st.markdown("<h1 class='dashboard-title'>Upload daily XLSX</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='muted dashboard-subtitle'>Choose the exported Tekion file. The dashboard updates immediately.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='muted dashboard-subtitle'>Choose the exported VWHub files. Upload both files, then click Display Dashboard.</p>", unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("", type=['xlsx'], key='xlsx_uploader')
+    # Service Advisors Uploader
+    st.markdown("### 📊 Service Advisors")
+    uploaded_file_advisors = st.file_uploader("Upload Advisors XLSX", type=['xlsx'], key='xlsx_uploader_advisors')
     
-    if uploaded_file is not None:
+    if uploaded_file_advisors is not None:
         try:
-            with st.spinner('Processing XLSX file...'):
-                xlsx_bytes = uploaded_file.read()
+            with st.spinner('Processing Advisors XLSX file...'):
+                xlsx_bytes = uploaded_file_advisors.read()
                 doc = parse_xlsx_bytes(xlsx_bytes)
                 
                 # Save to session state
-                st.session_state.doc = doc
+                st.session_state.doc_advisors = doc
+                st.session_state.doc = doc  # Backward compatibility
                 
                 # Save to storage/latest.json
                 storage_dir = Path(__file__).parent / 'storage'
@@ -825,27 +905,56 @@ if st.session_state.page == 'upload':
                     json.dump(doc, f, indent=2)
                 
                 exported = doc.get('meta', {}).get('Exported Raw') or doc.get('meta', {}).get('Exported') or '—'
-                st.success(f"✅ Uploaded successfully! Exported: {exported}")
-                st.info("Redirecting to dashboard...")
-                
-                # Auto-redirect after short delay
-                import time
-                time.sleep(1)
-                st.session_state.page = 'dashboard'
-                st.rerun()
+                st.success(f"✅ Advisors uploaded successfully! Exported: {exported}")
                 
         except Exception as e:
-            st.error(f"❌ Failed to process file: {str(e)}")
+            st.error(f"❌ Failed to process Advisors file: {str(e)}")
+    
+    # Add some spacing
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Service Technicians Uploader
+    st.markdown("### 🔧 Service Technicians")
+    uploaded_file_technicians = st.file_uploader("Upload Technicians XLSX", type=['xlsx'], key='xlsx_uploader_technicians')
+    
+    if uploaded_file_technicians is not None:
+        try:
+            with st.spinner('Processing Technicians XLSX file...'):
+                xlsx_bytes = uploaded_file_technicians.read()
+                doc = parse_xlsx_bytes(xlsx_bytes)
+                
+                # Save to session state
+                st.session_state.doc_technicians = doc
+                
+                # Save to storage/technicians.json
+                storage_dir = Path(__file__).parent / 'storage'
+                storage_dir.mkdir(exist_ok=True)
+                with open(storage_dir / 'technicians.json', 'w') as f:
+                    json.dump(doc, f, indent=2)
+                
+                exported = doc.get('meta', {}).get('Exported Raw') or doc.get('meta', {}).get('Exported') or '—'
+                st.success(f"✅ Technicians uploaded successfully! Exported: {exported}")
+                
+        except Exception as e:
+            st.error(f"❌ Failed to process Technicians file: {str(e)}")
+    
+    # Display Dashboard button - only show if at least one file has been uploaded
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.session_state.doc_advisors is not None or st.session_state.doc_technicians is not None:
+        if st.button("📊 Display Dashboard", use_container_width=True, type="primary"):
+            st.session_state.page = 'dashboard'
+            st.rerun()
 
 # ============================================================================
 # DASHBOARD PAGE
 # ============================================================================
 
 else:
-    doc = st.session_state.doc
+    doc_advisors = st.session_state.doc_advisors
+    doc_technicians = st.session_state.doc_technicians
     
-    if doc is None:
-        st.markdown("<h1 class='dashboard-title'>Advisor Satisfaction</h1>", unsafe_allow_html=True)
+    if doc_advisors is None and doc_technicians is None:
+        st.markdown("<h1 class='dashboard-title'>Service Employee Dashboard</h1>", unsafe_allow_html=True)
         st.info("📂 No data available. Please upload an XLSX file to get started.")
         st.markdown("""
         <div style='padding: var(--spacing-xl); border: 1px solid #E5E7EB; 
@@ -853,201 +962,277 @@ else:
             <h3 style='font-size: var(--font-name);'>Getting Started</h3>
             <ol style='font-size: var(--font-base); line-height: 1.6;'>
                 <li>Click the "Upload" button in the top right</li>
-                <li>Select your Tekion Service Employee Rank XLSX file</li>
+                <li>Select your VWHub Service Employee Rank XLSX files</li>
+                <li>Upload for both Advisors and Technicians</li>
                 <li>The dashboard will load automatically</li>
             </ol>
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Extract data
-        meta = doc.get('meta', {})
-        dataset = doc.get('dataset', {})
-        title = dataset.get('title', 'Advisor Satisfaction')
-        columns = dataset.get('columns', [])
-        rows = dataset.get('rows', [])
-        field_types = doc.get('fieldTypes', {})
-        
-        # Find key columns
-        key_employee = guess_key(columns, ["Employee", "Advisor", "Service Advisor", "Name"])
-        key_rank = guess_key(columns, ["Rank"])
-        key_score = guess_key(columns, ["Satisfaction Score", "Score"])
-        key_impact = guess_key(columns, ["Impact"])
-        key_completes = guess_key(columns, ["Completes"])
-        key_total = guess_key(columns, ["Total Records", "Total"])
-        key_dealer = guess_key(columns, ["Dealer"])
-        key_area = guess_key(columns, ["Area"])
-        key_region = guess_key(columns, ["Region"])
-        
-        # Additional columns for collapsed view
-        key_fixed_first = guess_key(columns, ["Fixed right first time"])
-        key_spoke_immediately = guess_key(columns, ["Spoke to advisor immediately"])
-        key_kept_informed = guess_key(columns, ["Kept informed"])
-        
-        # Sort by rank
-        sorted_rows = sorted(rows, key=lambda r: safe_number(r.get(key_rank)) if key_rank else float('inf'))
-        sorted_rows = [r for r in sorted_rows if safe_number(r.get(key_rank) if key_rank else None) is not None]
-        
-        # Header info
-        level = meta.get('Level', '')
-        dealer_number = ""
-        dealer_name = ""
-        if ' - ' in level:
-            parts = level.split(' - ', 1)
-            dealer_number = parts[0].strip()
-            dealer_name = parts[1].strip()
+        # ====================================================================
+        # EXTRACT HEADER INFO FROM ADVISORS DATA (if available)
+        # ====================================================================
+        if doc_advisors is not None:
+            doc = doc_advisors
+            meta = doc.get('meta', {})
+            dataset = doc.get('dataset', {})
+            title = dataset.get('title', 'Service Employee Rank')
+            columns = dataset.get('columns', [])
+            rows = dataset.get('rows', [])
+            
+            # Find key columns for header info
+            key_dealer = guess_key(columns, ["Dealer"])
+            key_area = guess_key(columns, ["Area"])
+            key_region = guess_key(columns, ["Region"])
+            
+            # Header info
+            level = meta.get('Level', '')
+            dealer_number = ""
+            dealer_name = ""
+            if ' - ' in level:
+                parts = level.split(' - ', 1)
+                dealer_number = parts[0].strip()
+                dealer_name = parts[1].strip()
+            else:
+                dealer_name = level.strip()
+            
+            first_row = rows[0] if rows else {}
+            area = str(first_row.get(key_area, '')).strip() if key_area else ""
+            region = str(first_row.get(key_region, '')).strip() if key_region else ""
+            if not dealer_number and key_dealer:
+                dealer_number = str(first_row.get(key_dealer, '')).strip()
+            
+            # Display Header at top of page
+            st.markdown(f"<h1 class='dashboard-title'>{title}</h1>", unsafe_allow_html=True)
+            
+            subtitle_parts = []
+            if dealer_number:
+                subtitle_parts.append(f"Dealer: {dealer_number}")
+            if dealer_name:
+                subtitle_parts.append(dealer_name)
+            if area:
+                subtitle_parts.append(f"Area: {area}")
+            if region:
+                subtitle_parts.append(f"Region: {region}")
+            subtitle_parts.append("Period: 1D")
+            
+            subtitle = " <span class='dot'>•</span> ".join(subtitle_parts)
+            st.markdown(f"<p class='muted dashboard-subtitle'>{subtitle}</p>", unsafe_allow_html=True)
+            
+            exported_display = meta.get('Exported Raw') or meta.get('Exported') or '—'
+            st.markdown(f"<p class='muted dashboard-subtitle'>Last update: <strong>{exported_display}</strong></p>", unsafe_allow_html=True)
         else:
-            dealer_name = level.strip()
+            st.markdown("<h1 class='dashboard-title'>Service Employee Rank</h1>", unsafe_allow_html=True)
         
-        first_row = sorted_rows[0] if sorted_rows else {}
-        area = str(first_row.get(key_area, '')).strip() if key_area else ""
-        region = str(first_row.get(key_region, '')).strip() if key_region else ""
-        if not dealer_number and key_dealer:
-            dealer_number = str(first_row.get(key_dealer, '')).strip()
+        # ====================================================================
+        # CREATE TWO COLUMNS FOR LEADERBOARDS
+        # ====================================================================
+        col_advisors, col_divider, col_technicians = st.columns([68, 2, 30])
         
-        # Header
-        st.markdown(f"<h1 class='dashboard-title'>{title}</h1>", unsafe_allow_html=True)
-        
-        subtitle_parts = []
-        if dealer_number:
-            subtitle_parts.append(f"Dealer: {dealer_number}")
-        if dealer_name:
-            subtitle_parts.append(dealer_name)
-        if area:
-            subtitle_parts.append(f"Area: {area}")
-        if region:
-            subtitle_parts.append(f"Region: {region}")
-        subtitle_parts.append("Period: 1D")
-        
-        subtitle = " <span class='dot'>•</span> ".join(subtitle_parts)
-        st.markdown(f"<p class='muted dashboard-subtitle'>{subtitle}</p>", unsafe_allow_html=True)
-        
-        exported_display = meta.get('Exported Raw') or meta.get('Exported') or '—'
-        st.markdown(f"<p class='muted dashboard-subtitle'>Last update: <strong>{exported_display}</strong></p>", unsafe_allow_html=True)
-        
-        # Detail columns (exclude only collapsed view fields and metadata)
-        exclude = set([key_employee, key_dealer, key_area, key_region, key_rank, key_score, key_fixed_first, key_spoke_immediately, key_kept_informed])
-        exclude = {c for c in exclude if c}
-        detail_columns = [c for c in columns if c not in exclude]
-        
-        # Leaderboard
-        if not sorted_rows:
-            st.warning("No advisor data found in the uploaded file.")
-        else:
-            for idx, row in enumerate(sorted_rows):
-                rank = safe_number(row.get(key_rank) if key_rank else None)
-                name = row.get(key_employee) if key_employee else "—"
-                score = row.get(key_score) if key_score else None
-                impact = row.get(key_impact) if key_impact else None
-                completes = row.get(key_completes) if key_completes else None
-                total = row.get(key_total) if key_total else None
+        # ====================================================================
+        # ADVISORS COLUMN (75%)
+        # ====================================================================
+        with col_advisors:
+            st.markdown("<h2 style='font-size: clamp(18px, 2vw, 24px); font-weight: 800; margin-bottom: 8px;'>Advisors</h2>", unsafe_allow_html=True)
+            
+            # Add column headers
+            st.markdown("""
+            <div style='display: grid; grid-template-columns: 0.5fr 2fr 1.5fr 1.5fr 1.5fr 1.5fr 0.5fr; 
+                        gap: clamp(4px, 0.5vw, 8px); padding: 8px 0; margin-bottom: 8px;
+                        border-bottom: 1px solid #E5E7EB;'>
+                <div style='font-size: 11px; font-weight: 700; color: #6B7280; text-align: center;'>Rank</div>
+                <div style='font-size: 11px; font-weight: 700; color: #6B7280;'>Name</div>
+                <div style='font-size: 11px; font-weight: 700; color: #6B7280; text-align: center;'>Scores</div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if doc_advisors is not None:
+                doc = doc_advisors
+                # Extract data
+                meta = doc.get('meta', {})
+                dataset = doc.get('dataset', {})
+                columns = dataset.get('columns', [])
+                rows = dataset.get('rows', [])
+                field_types = doc.get('fieldTypes', {})
                 
-                # Unique ID for expander
-                row_id = f"{rank}_{name}_{idx}"
+                # Find key columns
+                key_employee = guess_key(columns, ["Employee", "Advisor", "Service Advisor", "Name"])
+                key_rank = guess_key(columns, ["Rank"])
+                key_score = guess_key(columns, ["Satisfaction Score", "Score"])
+                key_impact = guess_key(columns, ["Impact"])
+                key_completes = guess_key(columns, ["Completes"])
+                key_total = guess_key(columns, ["Total Records", "Total"])
+                key_dealer = guess_key(columns, ["Dealer"])
+                key_area = guess_key(columns, ["Area"])
+                key_region = guess_key(columns, ["Region"])
                 
-                # Rank styling - all dividers now gray
-                rank_class = rank_color(rank)
-                border_color = "#E5E7EB"
+                # Additional columns for collapsed view
+                key_fixed_first = guess_key(columns, ["Fixed right first time"])
+                key_spoke_immediately = guess_key(columns, ["Spoke to advisor immediately"])
+                key_kept_informed = guess_key(columns, ["Kept informed"])
                 
-                # Card container with responsive classes
-                with st.container():
-                    st.markdown(f"""
-                    <div class='advisor-card' style='border: 2px solid {border_color}; 
-                                background: linear-gradient(180deg, #FFFFFF, #F9FAFB);'>
-                    """, unsafe_allow_html=True)
-                    
-                    # Get values for collapsed view metrics
-                    fixed_first = row.get(key_fixed_first) if key_fixed_first else None
-                    spoke_immediately = row.get(key_spoke_immediately) if key_spoke_immediately else None
-                    kept_informed = row.get(key_kept_informed) if key_kept_informed else None
-                    
-                    # Get field types for rendering
-                    fixed_first_type = field_types.get(key_fixed_first, 'string') if key_fixed_first else 'string'
-                    spoke_immediately_type = field_types.get(key_spoke_immediately, 'string') if key_spoke_immediately else 'string'
-                    kept_informed_type = field_types.get(key_kept_informed, 'string') if key_kept_informed else 'string'
-                    
-                    # Header row (always visible) - using responsive layout
-                    col_rank, col_name, col_score, col_fixed, col_spoke, col_kept, col_expand = st.columns([0.5, 2, 1.5, 1.5, 1.5, 1.5, 0.5], gap="small")
-                    
-                    with col_rank:
-                        st.markdown(f"<div class='advisor-rank' style='padding: var(--spacing-sm) var(--spacing-xs);'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
-                    with col_name:
-                        st.markdown(f"<div class='advisor-name' style='padding: var(--spacing-sm) var(--spacing-xs);'>{name}</div>", unsafe_allow_html=True)
-                    with col_score:
-                        score_rendered = render_score_progress(score)
-                        st.markdown(f"""
-                        <div class='metric-chip'>
-                            <div class='chip-label'>Satisfaction Score</div>
-                            <div>{score_rendered}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col_fixed:
-                        if fixed_first_type == 'percent':
-                            rendered_value = render_circular_progress(fixed_first, key_fixed_first or "")
-                        else:
-                            rendered_value = f'<span class="mono chip-value">{safe_number(fixed_first) if safe_number(fixed_first) is not None else "—"}</span>'
-                        st.markdown(f"""
-                        <div class='metric-chip'>
-                            <div class='chip-label'>Fixed right first time</div>
-                            <div>{rendered_value}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col_spoke:
-                        if spoke_immediately_type == 'percent':
-                            rendered_value = render_circular_progress(spoke_immediately, key_spoke_immediately or "")
-                        else:
-                            rendered_value = f'<span class="mono chip-value">{safe_number(spoke_immediately) if safe_number(spoke_immediately) is not None else "—"}</span>'
-                        st.markdown(f"""
-                        <div class='metric-chip'>
-                            <div class='chip-label'>Spoke to advisor immediately</div>
-                            <div>{rendered_value}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col_kept:
-                        if kept_informed_type == 'percent':
-                            rendered_value = render_circular_progress(kept_informed, key_kept_informed or "")
-                        else:
-                            rendered_value = f'<span class="mono chip-value">{safe_number(kept_informed) if safe_number(kept_informed) is not None else "—"}</span>'
-                        st.markdown(f"""
-                        <div class='metric-chip'>
-                            <div class='chip-label'>Kept informed</div>
-                            <div>{rendered_value}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    with col_expand:
-                        is_expanded = row_id in st.session_state.expanded_rows
-                        if st.button("▾" if is_expanded else "▸", key=f"expand_{row_id}"):
-                            if is_expanded:
-                                st.session_state.expanded_rows.remove(row_id)
-                            else:
-                                st.session_state.expanded_rows.add(row_id)
-                            st.rerun()
-                    
-                    # Expanded details with responsive grid
-                    if row_id in st.session_state.expanded_rows:
-                        # Build entire grid HTML as single string to preserve CSS grid layout
-                        grid_html = "<div class='kpi-grid-container'><div class='kpi-grid'>"
+                # Sort by rank
+                sorted_rows = sorted(rows, key=lambda r: safe_number(r.get(key_rank)) if key_rank else float('inf'))
+                sorted_rows = [r for r in sorted_rows if safe_number(r.get(key_rank) if key_rank else None) is not None]
+                
+                # Detail columns (exclude only collapsed view fields and metadata)
+                exclude = set([key_employee, key_dealer, key_area, key_region, key_rank, key_score, key_fixed_first, key_spoke_immediately, key_kept_informed])
+                exclude = {c for c in exclude if c}
+                detail_columns = [c for c in columns if c not in exclude]
+                
+                # Leaderboard
+                if not sorted_rows:
+                    st.warning("No advisor data found in the uploaded file.")
+                else:
+                    for idx, row in enumerate(sorted_rows):
+                        rank = safe_number(row.get(key_rank) if key_rank else None)
+                        name = normalize_display_name(row.get(key_employee)) if key_employee else "—"
+                        score = row.get(key_score) if key_score else None
+                        impact = row.get(key_impact) if key_impact else None
+                        completes = row.get(key_completes) if key_completes else None
+                        total = row.get(key_total) if key_total else None
                         
-                        # KPI Grid - responsive auto-fit layout
-                        for col_name in detail_columns:
-                            value = row.get(col_name)
-                            cell_type = field_types.get(col_name, 'string')
-                            rendered = render_cell(value, cell_type, col_name)
-                            
-                            # Escape HTML in column name to prevent breaking the layout
-                            safe_col_name = str(col_name).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
-                            
-                            # Build card HTML - single line to avoid whitespace issues
-                            grid_html += f"<div class='kpi-card'><div class='kpi-label'>{safe_col_name}</div><div class='kpi-value'>{rendered}</div></div>"
+                        # Unique ID for expander
+                        row_id = f"{rank}_{name}_{idx}"
                         
-                        grid_html += "</div></div>"
-                        st.markdown(grid_html, unsafe_allow_html=True)
-                    
-                    st.markdown("</div>", unsafe_allow_html=True)
+                        # Rank styling - all dividers now gray
+                        rank_class = rank_color(rank)
+                        border_color = "#E5E7EB"
+                        
+                        # Card container with responsive classes
+                        with st.container():
+                            st.markdown(f"""
+                            <div class='advisor-card' style='border: 2px solid {border_color}; 
+                                        background: linear-gradient(180deg, #FFFFFF, #F9FAFB);'>
+                            """, unsafe_allow_html=True)
+                            
+                            # Get values for collapsed view metrics
+                            fixed_first = row.get(key_fixed_first) if key_fixed_first else None
+                            spoke_immediately = row.get(key_spoke_immediately) if key_spoke_immediately else None
+                            kept_informed = row.get(key_kept_informed) if key_kept_informed else None
+                            
+                            # Get field types for rendering
+                            fixed_first_type = field_types.get(key_fixed_first, 'string') if key_fixed_first else 'string'
+                            spoke_immediately_type = field_types.get(key_spoke_immediately, 'string') if key_spoke_immediately else 'string'
+                            kept_informed_type = field_types.get(key_kept_informed, 'string') if key_kept_informed else 'string'
+                            
+                            # Header row (always visible) - using responsive layout
+                            col_rank, col_name, col_score, col_fixed, col_spoke, col_kept, col_expand = st.columns([0.5, 2, 1.5, 1.5, 1.5, 1.5, 0.5], gap="small")
+                            
+                            with col_rank:
+                                st.markdown(f"<div class='advisor-rank' style='padding: var(--spacing-sm) var(--spacing-xs);'>#{int(rank) if rank else '—'}</div>", unsafe_allow_html=True)
+                            with col_name:
+                                st.markdown(f"<div class='advisor-name' style='padding: var(--spacing-sm) var(--spacing-xs);'>{name}</div>", unsafe_allow_html=True)
+                            with col_score:
+                                score_rendered = render_score_progress(score)
+                                st.markdown(f"""
+                                <div class='metric-chip'>
+                                    <div class='chip-label'>Satisfaction Score</div>
+                                    <div>{score_rendered}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col_fixed:
+                                if fixed_first_type == 'percent':
+                                    rendered_value = render_circular_progress(fixed_first, key_fixed_first or "")
+                                else:
+                                    rendered_value = f'<span class="mono chip-value">{safe_number(fixed_first) if safe_number(fixed_first) is not None else "—"}</span>'
+                                st.markdown(f"""
+                                <div class='metric-chip'>
+                                    <div class='chip-label'>Fixed right first time</div>
+                                    <div>{rendered_value}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col_spoke:
+                                if spoke_immediately_type == 'percent':
+                                    rendered_value = render_circular_progress(spoke_immediately, key_spoke_immediately or "")
+                                else:
+                                    rendered_value = f'<span class="mono chip-value">{safe_number(spoke_immediately) if safe_number(spoke_immediately) is not None else "—"}</span>'
+                                st.markdown(f"""
+                                <div class='metric-chip'>
+                                    <div class='chip-label'>Spoke to advisor immediately</div>
+                                    <div>{rendered_value}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col_kept:
+                                if kept_informed_type == 'percent':
+                                    rendered_value = render_circular_progress(kept_informed, key_kept_informed or "")
+                                else:
+                                    rendered_value = f'<span class="mono chip-value">{safe_number(kept_informed) if safe_number(kept_informed) is not None else "—"}</span>'
+                                st.markdown(f"""
+                                <div class='metric-chip'>
+                                    <div class='chip-label'>Kept informed</div>
+                                    <div>{rendered_value}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            with col_expand:
+                                is_expanded = row_id in st.session_state.expanded_rows
+                                if st.button("▾" if is_expanded else "▸", key=f"expand_{row_id}"):
+                                    if is_expanded:
+                                        st.session_state.expanded_rows.remove(row_id)
+                                    else:
+                                        st.session_state.expanded_rows.add(row_id)
+                                    st.rerun()
+                            
+                            # Expanded details with responsive grid
+                            if row_id in st.session_state.expanded_rows:
+                                # Build entire grid HTML as single string to preserve CSS grid layout
+                                grid_html = "<div class='kpi-grid-container'><div class='kpi-grid'>"
+                                
+                                # KPI Grid - responsive auto-fit layout
+                                for col_name in detail_columns:
+                                    value = row.get(col_name)
+                                    cell_type = field_types.get(col_name, 'string')
+                                    rendered = render_cell(value, cell_type, col_name)
+                                    
+                                    # Escape HTML in column name to prevent breaking the layout
+                                    safe_col_name = str(col_name).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
+                                    
+                                    # Build card HTML - single line to avoid whitespace issues
+                                    grid_html += f"<div class='kpi-card'><div class='kpi-label'>{safe_col_name}</div><div class='kpi-value'>{rendered}</div></div>"
+                                
+                                grid_html += "</div></div>"
+                                st.markdown(grid_html, unsafe_allow_html=True)
+                            
+                            st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.info("📂 No advisor data available. Please upload advisor data.")
+        
+        # ====================================================================
+        # DIVIDER COLUMN
+        # ====================================================================
+        with col_divider:
+            st.markdown("""
+            <div style='height: 100%; border-left: 2px solid #E5E7EB; margin: 0 auto;'></div>
+            """, unsafe_allow_html=True)
+        
+        # ====================================================================
+        # TECHNICIANS COLUMN (25%)
+        # ====================================================================
+        with col_technicians:
+            st.markdown("<h2 style='font-size: clamp(16px, 1.8vw, 22px); font-weight: 800; margin-bottom: 8px;'>Technicians</h2>", unsafe_allow_html=True)
+            
+            # Add column headers
+            st.markdown("""
+            <div style='display: flex; align-items: center; gap: 8px; justify-content: space-between;
+                        padding: 8px 12px; margin-bottom: 8px; border-bottom: 1px solid #E5E7EB;'>
+                <div style='display: flex; align-items: center; gap: 8px; flex: 1;'>
+                    <div style='font-size: 11px; font-weight: 700; color: #6B7280; min-width: 25px;'>Rank</div>
+                    <div style='font-size: 11px; font-weight: 700; color: #6B7280;'>Name</div>
+                </div>
+                <div style='font-size: 11px; font-weight: 700; color: #6B7280; flex-shrink: 0;'>Fixed Right First Time</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            render_technician_leaderboard(doc_technicians)
 
 # ============================================================================
 # FOOTER
 # ============================================================================
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("<p class='muted' style='text-align: center; font-size: 12px;'>Advisor Satisfaction Dashboard • Streamlit Version</p>", unsafe_allow_html=True)
+st.markdown("<p class='muted' style='text-align: center; font-size: 12px;'>Service Employee Dashboard • Streamlit Version</p>", unsafe_allow_html=True)
 
