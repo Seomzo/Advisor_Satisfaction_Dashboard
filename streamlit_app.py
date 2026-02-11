@@ -83,10 +83,10 @@ header {visibility: hidden;}
 
 /* Remove default Streamlit padding */
 .block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    padding-left: clamp(0.5rem, 1.5vw, 2rem) !important;
-    padding-right: clamp(0.5rem, 1.5vw, 2rem) !important;
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+    padding-left: clamp(0.5rem, 1vw, 1.5rem) !important;
+    padding-right: clamp(0.5rem, 1vw, 1.5rem) !important;
     max-width: 100% !important;
 }
 
@@ -148,22 +148,22 @@ header {visibility: hidden;}
 .dashboard-title {
     font-size: var(--font-title);
     font-weight: 800;
-    margin-bottom: var(--spacing-sm);
-    line-height: 1.2;
+    margin-bottom: clamp(2px, 0.3vw, 4px);
+    line-height: 1.1;
 }
 
 .dashboard-subtitle {
     font-size: var(--font-subtitle);
-    margin-bottom: var(--spacing-md);
-    line-height: 1.4;
+    margin-bottom: clamp(4px, 0.5vw, 6px);
+    line-height: 1.3;
 }
 
 /* Responsive advisor card */
 .advisor-card {
-    border-radius: clamp(12px, 1.2vw, 18px);
-    margin-bottom: var(--spacing-md);
+    border-radius: clamp(8px, 1vw, 12px);
+    margin-bottom: clamp(4px, 0.5vw, 6px);
     overflow: hidden;
-    box-shadow: 0 clamp(4px, 0.5vw, 8px) clamp(12px, 1.5vw, 20px) rgba(0, 0, 0, 0.1);
+    box-shadow: 0 clamp(2px, 0.3vw, 4px) clamp(6px, 0.8vw, 10px) rgba(0, 0, 0, 0.08);
 }
 
 /* Collapsed view - responsive layout */
@@ -197,11 +197,11 @@ header {visibility: hidden;}
 .metric-chip {
     border: 1px solid #E5E7EB;
     border-radius: 999px;
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: clamp(6px, 0.6vw, 8px) clamp(8px, 0.8vw, 10px);
     background: #F9FAFB;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: clamp(3px, 0.4vw, 5px);
     min-width: 0;
 }
 
@@ -634,6 +634,71 @@ def parse_xlsx_bytes(xlsx_bytes: bytes) -> Dict[str, Any]:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
+def parse_satisfaction_score_xlsx(xlsx_bytes: bytes) -> Dict[str, Any]:
+    """Parse Satisfaction Score XLSX from bytes and return simplified dict"""
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+        tmp.write(xlsx_bytes)
+        tmp_path = tmp.name
+    
+    try:
+        with zipfile.ZipFile(tmp_path, "r") as z:
+            shared = _parse_shared_strings(z)
+            sheets = _parse_workbook_sheets(z)
+            sheet_map: Dict[str, List[List[str]]] = {}
+            for name, sheet_path in sheets:
+                sheet_map[name] = _parse_sheet_rows(z, sheet_path, shared)
+
+        # Find data sheet
+        data_sheet = None
+        for k in sheet_map.keys():
+            if k.lower() == "data":
+                data_sheet = k
+                break
+        if not data_sheet:
+            data_sheet = list(sheet_map.keys())[0]
+
+        rows = sheet_map[data_sheet]
+        
+        # Parse the satisfaction score data
+        # Expected format:
+        # Row 0: Header with timestamp
+        # Row 1: Column names (empty, "Score", "National", "Region", "Area")
+        # Row 2: Data values
+        
+        if len(rows) < 3:
+            raise RuntimeError("Satisfaction Score file has insufficient rows")
+        
+        # Find the data row (row with "Overall Performance")
+        data_row = None
+        for row in rows:
+            if row and len(row) > 0 and 'overall performance' in str(row[0]).lower():
+                data_row = row
+                break
+        
+        if not data_row or len(data_row) < 5:
+            raise RuntimeError("Could not find Overall Performance data row")
+        
+        # Extract scores
+        try:
+            score = float(data_row[1]) if data_row[1] else 0
+            national = float(data_row[2]) if data_row[2] else 0
+            region = float(data_row[3]) if data_row[3] else 0
+            area = float(data_row[4]) if data_row[4] else 0
+        except (ValueError, IndexError) as e:
+            raise RuntimeError(f"Could not parse satisfaction scores: {e}")
+
+        doc = {
+            "score": score,
+            "national": national,
+            "region": region,
+            "area": area,
+            "generatedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        }
+        return doc
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
 # ============================================================================
 # UTILITY FUNCTIONS (from utils.js)
 # ============================================================================
@@ -805,18 +870,41 @@ def render_technician_leaderboard(doc):
         
         # Compact single-line card
         st.markdown(f"""
-        <div style='border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 12px; 
-                    background: linear-gradient(180deg, #FFFFFF, #F9FAFB); margin-bottom: 6px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);'>
-            <div style='display: flex; align-items: center; gap: 8px; justify-content: space-between;'>
-                <div style='display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;'>
-                    <div style='font-size: 15px; font-weight: 950; min-width: 25px;'>#{int(rank) if rank else '—'}</div>
-                    <div style='font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>{name}</div>
+        <div style='border: 1px solid #E5E7EB; border-radius: 8px; padding: 6px 10px; 
+                    background: linear-gradient(180deg, #FFFFFF, #F9FAFB); margin-bottom: 4px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);'>
+            <div style='display: flex; align-items: center; gap: 6px; justify-content: space-between;'>
+                <div style='display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;'>
+                    <div style='font-size: 13px; font-weight: 950; min-width: 22px;'>#{int(rank) if rank else '—'}</div>
+                    <div style='font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'>{name}</div>
                 </div>
                 <div style='flex-shrink: 0;'>{rendered_value}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+def render_satisfaction_score_bar(doc):
+    """Render horizontal satisfaction score bar with Nation/Region/Area scores"""
+    if doc is None:
+        st.markdown("<p class='muted'>No satisfaction score data available</p>", unsafe_allow_html=True)
+        return
+    
+    score = doc.get('score', 0)
+    national = doc.get('national', 0)
+    region = doc.get('region', 0)
+    area = doc.get('area', 0)
+    
+    # Calculate percentage for bar (out of 1000)
+    percentage = (score / 1000) * 100
+    clamped = max(0, min(100, percentage))
+    
+    # Color: red if under 895, green otherwise
+    bar_color = "#EF4444" if score < 895 else "#10B981"
+    
+    # Build the HTML string - more compact version
+    html = f"""<div style='border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px 16px; background: linear-gradient(180deg, #FFFFFF, #F9FAFB); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); margin-bottom: 0px;'><div style='font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 10px;'>Overall Service Satisfaction Score</div><div style='margin-bottom: 10px;'><div style='display: flex; align-items: center; gap: 10px;'><div style='font-family: ui-monospace, monospace; font-size: 20px; font-weight: 950; color: {bar_color}; min-width: 70px;'>{score:.1f}</div><div style='flex: 1; height: 24px; background: #E5E7EB; border-radius: 12px; position: relative; overflow: hidden;'><div style='position: absolute; top: 0; left: 0; height: 100%; background: {bar_color}; width: {clamped}%; border-radius: 12px; transition: width 0.3s ease;'></div></div><div style='font-size: 13px; font-weight: 700; color: #6B7280; min-width: 50px;'>/ 1000</div></div></div><div style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; border-top: 1px solid #E5E7EB; padding-top: 10px;'><div style='text-align: center;'><div style='font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px;'>Nation</div><div style='display: flex; align-items: center; justify-content: center; gap: 3px;'><span style='font-size: 10px; color: #6B7280;'>{'▼' if score < national else '▲'}</span><span style='font-family: ui-monospace, monospace; font-size: 16px; font-weight: 800; color: {'#EF4444' if score < national else '#10B981'};'>{national:.1f}</span></div></div><div style='text-align: center;'><div style='font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px;'>Region</div><div style='display: flex; align-items: center; justify-content: center; gap: 3px;'><span style='font-size: 10px; color: #6B7280;'>{'▼' if score < region else '▲'}</span><span style='font-family: ui-monospace, monospace; font-size: 16px; font-weight: 800; color: {'#EF4444' if score < region else '#10B981'};'>{region:.1f}</span></div></div><div style='text-align: center;'><div style='font-size: 11px; font-weight: 700; color: #6B7280; margin-bottom: 4px;'>Area</div><div style='display: flex; align-items: center; justify-content: center; gap: 3px;'><span style='font-size: 10px; color: #6B7280;'>{'▼' if score < area else '▲'}</span><span style='font-family: ui-monospace, monospace; font-size: 16px; font-weight: 800; color: {'#EF4444' if score < area else '#10B981'};'>{area:.1f}</span></div></div></div></div>"""
+    
+    st.markdown(html, unsafe_allow_html=True)
 
 # ============================================================================
 # SESSION STATE INITIALIZATION
@@ -850,6 +938,19 @@ if 'doc_technicians' not in st.session_state:
             st.session_state.doc_technicians = None
     else:
         st.session_state.doc_technicians = None
+
+# Satisfaction Score data
+if 'doc_satisfaction_score' not in st.session_state:
+    # Try to load from storage/satisfaction_score.json if exists
+    storage_path = Path(__file__).parent / 'storage' / 'satisfaction_score.json'
+    if storage_path.exists():
+        try:
+            with open(storage_path, 'r') as f:
+                st.session_state.doc_satisfaction_score = json.load(f)
+        except:
+            st.session_state.doc_satisfaction_score = None
+    else:
+        st.session_state.doc_satisfaction_score = None
 
 # Backward compatibility
 if 'doc' not in st.session_state:
@@ -938,9 +1039,36 @@ if st.session_state.page == 'upload':
         except Exception as e:
             st.error(f"❌ Failed to process Technicians file: {str(e)}")
     
+    # Add some spacing
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Service Satisfaction Score Uploader
+    st.markdown("### 📈 Service Satisfaction Score")
+    uploaded_file_satisfaction = st.file_uploader("Upload Service Satisfaction Score XLSX", type=['xlsx'], key='xlsx_uploader_satisfaction')
+    
+    if uploaded_file_satisfaction is not None:
+        try:
+            with st.spinner('Processing Service Satisfaction Score XLSX file...'):
+                xlsx_bytes = uploaded_file_satisfaction.read()
+                doc = parse_satisfaction_score_xlsx(xlsx_bytes)
+                
+                # Save to session state
+                st.session_state.doc_satisfaction_score = doc
+                
+                # Save to storage/satisfaction_score.json
+                storage_dir = Path(__file__).parent / 'storage'
+                storage_dir.mkdir(exist_ok=True)
+                with open(storage_dir / 'satisfaction_score.json', 'w') as f:
+                    json.dump(doc, f, indent=2)
+                
+                st.success(f"✅ Service Satisfaction Score uploaded successfully! Score: {doc.get('score', '—')}")
+                
+        except Exception as e:
+            st.error(f"❌ Failed to process Service Satisfaction Score file: {str(e)}")
+    
     # Display Dashboard button - only show if at least one file has been uploaded
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.session_state.doc_advisors is not None or st.session_state.doc_technicians is not None:
+    if st.session_state.doc_advisors is not None or st.session_state.doc_technicians is not None or st.session_state.doc_satisfaction_score is not None:
         if st.button("📊 Display Dashboard", use_container_width=True, type="primary"):
             st.session_state.page = 'dashboard'
             st.rerun()
@@ -1025,24 +1153,31 @@ else:
             st.markdown("<h1 class='dashboard-title'>Service Employee Rank</h1>", unsafe_allow_html=True)
         
         # ====================================================================
-        # CREATE TWO COLUMNS FOR LEADERBOARDS
+        # CREATE SINGLE ROW: LEFT COLUMN (SATISFACTION + ADVISORS) | RIGHT COLUMN (TECHNICIANS)
         # ====================================================================
-        col_advisors, col_divider, col_technicians = st.columns([68, 2, 30])
+        col_left, col_divider, col_technicians = st.columns([68, 2, 30])
         
-        # ====================================================================
-        # ADVISORS COLUMN (75%)
-        # ====================================================================
-        with col_advisors:
-            st.markdown("<h2 style='font-size: clamp(18px, 2vw, 24px); font-weight: 800; margin-bottom: 8px;'>Advisors</h2>", unsafe_allow_html=True)
+        # LEFT COLUMN: Satisfaction Score + Advisors (stacked vertically)
+        with col_left:
+            # Satisfaction Score at top of left column
+            doc_satisfaction_score = st.session_state.doc_satisfaction_score
+            if doc_satisfaction_score is not None:
+                render_satisfaction_score_bar(doc_satisfaction_score)
+            
+            # Small spacing between satisfaction score and advisors
+            st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
+            
+            # Advisors section (continues in same left column)
+            st.markdown("<h2 style='font-size: clamp(18px, 2vw, 24px); font-weight: 800; margin-bottom: 4px; margin-top: 0px;'>Advisors</h2>", unsafe_allow_html=True)
             
             # Add column headers
             st.markdown("""
             <div style='display: grid; grid-template-columns: 0.5fr 2fr 1.5fr 1.5fr 1.5fr 1.5fr 0.5fr; 
-                        gap: clamp(4px, 0.5vw, 8px); padding: 8px 0; margin-bottom: 8px;
+                        gap: clamp(4px, 0.5vw, 8px); padding: 3px 0; margin-bottom: 3px;
                         border-bottom: 1px solid #E5E7EB;'>
-                <div style='font-size: 11px; font-weight: 700; color: #6B7280; text-align: center;'>Rank</div>
-                <div style='font-size: 11px; font-weight: 700; color: #6B7280;'>Name</div>
-                <div style='font-size: 11px; font-weight: 700; color: #6B7280; text-align: center;'>Scores</div>
+                <div style='font-size: 10px; font-weight: 700; color: #6B7280; text-align: center;'>Rank</div>
+                <div style='font-size: 10px; font-weight: 700; color: #6B7280;'>Name</div>
+                <div style='font-size: 10px; font-weight: 700; color: #6B7280; text-align: center;'>Scores</div>
                 <div></div>
                 <div></div>
                 <div></div>
@@ -1201,29 +1336,25 @@ else:
             else:
                 st.info("📂 No advisor data available. Please upload advisor data.")
         
-        # ====================================================================
         # DIVIDER COLUMN
-        # ====================================================================
         with col_divider:
             st.markdown("""
             <div style='height: 100%; border-left: 2px solid #E5E7EB; margin: 0 auto;'></div>
             """, unsafe_allow_html=True)
         
-        # ====================================================================
-        # TECHNICIANS COLUMN (25%)
-        # ====================================================================
+        # RIGHT COLUMN: Technicians
         with col_technicians:
-            st.markdown("<h2 style='font-size: clamp(16px, 1.8vw, 22px); font-weight: 800; margin-bottom: 8px;'>Technicians</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='font-size: clamp(14px, 1.6vw, 20px); font-weight: 800; margin-bottom: 6px;'>Technicians</h2>", unsafe_allow_html=True)
             
             # Add column headers
             st.markdown("""
-            <div style='display: flex; align-items: center; gap: 8px; justify-content: space-between;
-                        padding: 8px 12px; margin-bottom: 8px; border-bottom: 1px solid #E5E7EB;'>
-                <div style='display: flex; align-items: center; gap: 8px; flex: 1;'>
-                    <div style='font-size: 11px; font-weight: 700; color: #6B7280; min-width: 25px;'>Rank</div>
-                    <div style='font-size: 11px; font-weight: 700; color: #6B7280;'>Name</div>
+            <div style='display: flex; align-items: center; gap: 6px; justify-content: space-between;
+                        padding: 6px 10px; margin-bottom: 6px; border-bottom: 1px solid #E5E7EB;'>
+                <div style='display: flex; align-items: center; gap: 6px; flex: 1;'>
+                    <div style='font-size: 10px; font-weight: 700; color: #6B7280; min-width: 22px;'>Rank</div>
+                    <div style='font-size: 10px; font-weight: 700; color: #6B7280;'>Name</div>
                 </div>
-                <div style='font-size: 11px; font-weight: 700; color: #6B7280; flex-shrink: 0;'>Fixed Right First Time</div>
+                <div style='font-size: 10px; font-weight: 700; color: #6B7280; flex-shrink: 0;'>Fixed Right First Time</div>
             </div>
             """, unsafe_allow_html=True)
             
